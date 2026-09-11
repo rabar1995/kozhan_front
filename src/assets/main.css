@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+[dir="rtl"] {
+    font-family: "Segoe UI", Tahoma, "Noto Naskh Arabic", "Arabic Typesetting", "Noto Sans Arabic", sans-serif;
+}
+
+[dir="rtl"] table {
+    text-align: start;
+}
+
+/* ───── Sidebar custom scrollbar ───── */
+.sidebar-scroll::-webkit-scrollbar {
+    width: 4px;
+}
+.sidebar-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+.sidebar-scroll::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.25);
+    border-radius: 9999px;
+}
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.45);
+}
+
+/* ───── Sidebar slide animation ───── */
+.sidebar-enter-active,
+.sidebar-leave-active {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.sidebar-enter-from {
+    transform: translateX(-100%);
+}
+[dir="rtl"] .sidebar-enter-from {
+    transform: translateX(100%);
+}
+.sidebar-leave-to {
+    transform: translateX(-100%);
+}
+[dir="rtl"] .sidebar-leave-to {
+    transform: translateX(100%);
+}
+
+/* ───── Sidebar overlay animation ───── */
+.overlay-enter-active,
+.overlay-leave-active {
+    transition: opacity 0.3s ease;
+}
+.overlay-enter-from,
+.overlay-leave-to {
+    opacity: 0;
+}
+
+/* ───── Modal animation ───── */
+.modal-enter-active {
+    transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.modal-leave-active {
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.modal-enter-from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+}
+.modal-leave-to {
+    opacity: 0;
+    transform: scale(0.97) translateY(5px);
+}
+
+/* ───── Modal backdrop animation ───── */
+.modal-backdrop-enter-active,
+.modal-backdrop-leave-active {
+    transition: opacity 0.2s ease;
+}
+.modal-backdrop-enter-from,
+.modal-backdrop-leave-to {
+    opacity: 0;
+}
+
+/* ───── Nav item hover slide effect ───── */
+.nav-item {
+    transition: background-color 0.2s ease, color 0.2s ease, padding-inline-start 0.2s ease;
+}
+.nav-item:hover {
+    padding-inline-start: 1rem;
+}
+.nav-item.nav-active {
+    padding-inline-start: 0.75rem;
+}
