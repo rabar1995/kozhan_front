@@ -45,7 +45,7 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('expenses.amountRequired') }}</label>
-                    <input v-model.number="form.amount" type="number" step="0.01" min="0.01" required
+                    <MoneyInput v-model="form.amount" required
                         class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
                     <p v-if="errors.amount" class="text-xs text-red-600 mt-1">{{ errors.amount[0] }}</p>
                 </div>
@@ -83,6 +83,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { api, apiError } from '../api/client'
 import { useAccountStore } from '../stores/account'
+import MoneyInput from '../components/MoneyInput.vue'
 
 const accountStore = useAccountStore()
 const { t } = useI18n()

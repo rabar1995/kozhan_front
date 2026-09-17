@@ -23,7 +23,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-500 mb-1">{{ $t('transfers.amountRequired') }}</label>
-                    <input v-model.number="form.amount" type="number" step="0.01" min="0.01" required
+                    <MoneyInput v-model="form.amount" required
                         class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
                 </div>
                 <div>
@@ -83,6 +83,7 @@ import { api, apiError } from '../api/client'
 import { useAccountStore } from '../stores/account'
 import { money, dateTime } from '../utils/format'
 import Pagination from '../components/Pagination.vue'
+import MoneyInput from '../components/MoneyInput.vue'
 
 const accountStore = useAccountStore()
 

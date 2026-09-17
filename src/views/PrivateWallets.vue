@@ -272,6 +272,16 @@
                         </select>
                     </div>
                 </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('accounts.openingBalance') }}</label>
+                    <MoneyInput
+                        v-model="form.opening_balance"
+                        :max-decimals="4"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    />
+                    <p class="text-xs text-gray-400 mt-1">{{ $t('accounts.openingBalanceHint') }}</p>
+                    <p v-if="errors.opening_balance" class="text-xs text-red-600 mt-1">{{ errors.opening_balance[0] }}</p>
+                </div>
                 <LogoPicker v-model="form.logo" :name="form.name" />
                 <div class="flex justify-end gap-2 pt-2">
                     <button type="button" class="px-4 py-2 text-sm rounded-lg border hover:bg-gray-50" @click="showCreate = false">{{ $t('common.cancel') }}</button>
@@ -372,6 +382,7 @@ import Modal from '../components/Modal.vue'
 import Pagination from '../components/Pagination.vue'
 import LogoAvatar from '../components/LogoAvatar.vue'
 import LogoPicker from '../components/LogoPicker.vue'
+import MoneyInput from '../components/MoneyInput.vue'
 
 const accountStore = useAccountStore()
 const { can } = usePermissions()
@@ -395,7 +406,7 @@ const ledgerMeta = ref(null)
 const ledgerLoading = ref(false)
 const ledgerFilters = reactive({ date_from: '', date_to: '' })
 
-const form = reactive({ name: '', account_type_id: '', currency_id: '', logo: '' })
+const form = reactive({ name: '', account_type_id: '', currency_id: '', logo: '', opening_balance: 0 })
 const editForm = reactive({ name: '', account_type_id: '', currency_id: '', logo: '' })
 
 const editBalance = computed(() => Number(editTarget.value?.current_balance ?? 0))
@@ -437,9 +448,10 @@ async function create() {
             currency_id: form.currency_id,
             visibility: 'owner_private',
             logo_url: form.logo ? form.logo : undefined,
+            opening_balance: Number(form.opening_balance) > 0 ? Number(form.opening_balance) : undefined,
         })
         showCreate.value = false
-        Object.assign(form, { name: '', account_type_id: '', currency_id: '', logo: '' })
+        Object.assign(form, { name: '', account_type_id: '', currency_id: '', logo: '', opening_balance: 0 })
         await accountStore.fetchAccounts()
     } catch (e) {
         const parsed = apiError(e)

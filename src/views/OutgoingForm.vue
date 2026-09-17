@@ -133,11 +133,8 @@
                     <!-- Send Amount -->
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1">{{ $t('outgoing.amountSent') }}</label>
-                        <input
-                            v-model.number="form.send_amount"
-                            type="number"
-                            step="0.01"
-                            min="0.01"
+                        <MoneyInput
+                            v-model="form.send_amount"
                             required
                             class="w-full rounded-xl border border-gray-200 px-3.5 py-2 text-sm font-semibold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
                         />
@@ -175,11 +172,8 @@
                     <!-- Receive / Collect Amount -->
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1">{{ $t('outgoing.amountCollected') }}</label>
-                        <input
-                            v-model.number="form.receive_amount"
-                            type="number"
-                            step="0.01"
-                            min="0.01"
+                        <MoneyInput
+                            v-model="form.receive_amount"
                             required
                             class="w-full rounded-xl border border-gray-200 px-3.5 py-2 text-sm font-bold text-indigo-700 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
                         />
@@ -265,6 +259,7 @@ import { useAgentStore } from '../stores/agent'
 import { useAccountStore } from '../stores/account'
 import { useRemittanceStore } from '../stores/remittance'
 import LogoSelect from '../components/LogoSelect.vue'
+import MoneyInput from '../components/MoneyInput.vue'
 
 const router = useRouter()
 const { t } = useI18n()
@@ -273,8 +268,15 @@ const agentStore = useAgentStore()
 const agentOptions = computed(() =>
     agentStore.agents.map(a => ({
         ...a,
-        sublabel: `${a.balance_currency?.code ?? ''} — ${a.classification}`.trim(),
+        // Show every handled currency for multi-currency agents (or allow_all)
+        sublabel: `${agentCurrencyCodes(a)} — ${a.classification}`.trim(),
     })))
+
+function agentCurrencyCodes(a) {
+    if (a.allow_all_currencies) return 'Any currency'
+    const codes = (a.currency_accounts || []).map(p => p.currency?.code).filter(Boolean)
+    return codes.length ? codes.join(', ') : (a.balance_currency?.code ?? '')
+}
 const accountStore = useAccountStore()
 const remittanceStore = useRemittanceStore()
 

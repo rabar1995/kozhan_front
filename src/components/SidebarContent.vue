@@ -236,7 +236,21 @@ const icons = {
 
 /* ───── CATEGORIES & SUB-TABS DEFINITION ───── */
 const categories = computed(() => {
-    const list = [
+    const list = []
+
+    if (auth.isOwner) {
+        list.push({
+            id: 'kozhan',
+            label: 'nav.kozhanWallets',
+            icon: 'wallets',
+            items: [
+                { to: '/private-wallets', label: 'nav.privateWallets', icon: 'privateWallets' },
+                { to: '/exchange-deals', label: 'nav.exchangeDeals', icon: 'exchangeDeals' },
+            ],
+        })
+    }
+
+    list.push(
         {
             id: 'remittances',
             label: 'nav.remittances',
@@ -255,11 +269,10 @@ const categories = computed(() => {
             items: [
                 { to: '/agents', label: 'nav.agents', icon: 'agents' },
                 { to: '/accounts', label: 'nav.wallets', icon: 'wallets' },
-                ...(auth.isOwner ? [{ to: '/private-wallets', label: 'nav.privateWallets', icon: 'privateWallets' }] : []),
                 { to: '/expenses', label: 'nav.expenses', icon: 'expenses' },
             ],
         },
-    ]
+    )
 
     if (can('view-reports')) {
         list.push({
@@ -270,7 +283,6 @@ const categories = computed(() => {
                 { to: '/reports/profit-loss', label: 'nav.profitLoss', icon: 'profitLoss' },
                 { to: '/transfers', label: 'nav.transfers', icon: 'transfers' },
                 { to: '/exchange-rates', label: 'nav.exchangeRates', icon: 'exchangeRates' },
-                { to: '/exchange-deals', label: 'nav.exchangeDeals', icon: 'exchangeDeals' },
                 { to: '/users', label: 'nav.userManagement', icon: 'userManagement' },
                 { to: '/audit-logs', label: 'nav.auditLogs', icon: 'auditLogs' },
             ],
@@ -282,6 +294,7 @@ const categories = computed(() => {
 
 /* ───── ACCORDION EXPANSION STATE ───── */
 const expanded = ref({
+    kozhan: true,
     remittances: true,
     operations: true,
     owner: false,

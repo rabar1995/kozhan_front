@@ -18,14 +18,15 @@
 
             <form class="space-y-4" @submit.prevent="submit">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('auth.emailOrUsername') }}</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('auth.phoneOrUsername') }}</label>
                     <input
-                        v-model="form.email"
-                        type="text"
+                        v-model="form.phone"
+                        type="tel"
                         required
-                        autocomplete="username"
+                        autocomplete="tel"
+                        inputmode="tel"
                         class="w-full rounded-lg border-gray-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                        placeholder="owner@exchange.com"
+                        placeholder="07701234567"
                     />
                 </div>
                 <div>
@@ -62,7 +63,7 @@ const auth = useAuthStore()
 const router = useRouter()
 const route = useRoute()
 
-const form = reactive({ email: '', password: '' })
+const form = reactive({ phone: '', password: '' })
 const loading = ref(false)
 const error = ref('')
 

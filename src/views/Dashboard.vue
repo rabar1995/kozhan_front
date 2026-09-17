@@ -91,6 +91,9 @@
         </div>
 
         <template v-if="kpis">
+            <!-- Owner Private Wallets Hero Card (owner only) -->
+            <PrivateWalletsOverview v-if="isOwner" ref="privateRef" class="mb-8" />
+
             <!-- Today KPIs Row -->
             <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
                 {{ $t('dashboard.today') }}
@@ -105,7 +108,7 @@
                 <KpiCard :label="$t('dashboard.commissionPaid')" :value="kpis.today?.commission_paid_today" tone="red" icon="money" money />
             </div>
 
-            <!-- Middle Section: Cash Safes + Urgent Payouts (2 columns) -->
+            <!-- Middle Section: Cash Safes + Urgent Payouts -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
                 <CashSafeOverview ref="cashRef" />
                 <UrgentPayoutsFeed ref="urgentRef" @complete="openCompletePayout" />
@@ -190,6 +193,7 @@ import { useRemittanceStore } from '../stores/remittance'
 import { money as moneyFmt } from '../utils/format'
 import KpiCard from '../components/KpiCard.vue'
 import CashSafeOverview from '../components/CashSafeOverview.vue'
+import PrivateWalletsOverview from '../components/PrivateWalletsOverview.vue'
 import UrgentPayoutsFeed from '../components/UrgentPayoutsFeed.vue'
 import LiveRatesWidget from '../components/LiveRatesWidget.vue'
 import Modal from '../components/Modal.vue'
@@ -197,6 +201,7 @@ import Modal from '../components/Modal.vue'
 const { t } = useI18n()
 const { can } = usePermissions()
 const { isInstalled, promptInstall } = usePwa()
+const isOwner = usePermissions().isOwner
 const accountStore = useAccountStore()
 const remittanceStore = useRemittanceStore()
 
@@ -225,6 +230,7 @@ const completeError = ref('')
 const completeBusy = ref(false)
 
 const cashRef = ref(null)
+const privateRef = ref(null)
 const urgentRef = ref(null)
 const ratesRef = ref(null)
 
@@ -279,6 +285,7 @@ async function refreshAll() {
     await Promise.all([
         loadKpis(),
         cashRef.value?.load?.() || accountStore.fetchAccounts({ active: 1 }).catch(() => {}),
+        privateRef.value?.load?.(),
         urgentRef.value?.load?.(),
         ratesRef.value?.load?.(),
     ])

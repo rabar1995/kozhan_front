@@ -174,6 +174,15 @@
                         </span>
                     </div>
 
+                    <!-- Currency badges (multi-currency agents) -->
+                    <div v-if="agentCurrencyCodes(agent).length > 1" class="mt-2 flex items-center gap-1 flex-wrap">
+                        <span
+                            v-for="code in agentCurrencyCodes(agent)"
+                            :key="code"
+                            class="px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 text-[10px] font-bold border border-slate-200"
+                        >{{ code }}</span>
+                    </div>
+
                     <!-- Net Balance Box -->
                     <div
                         class="mt-3 p-3 rounded-xl border transition-colors"
@@ -277,7 +286,12 @@
                             {{ agent.phone || '-' }}
                             <span v-if="agent.city" class="text-gray-400">· {{ agent.city }}{{ agent.country ? `, ${agent.country}` : '' }}</span>
                         </td>
-                        <td class="px-4 py-3 font-semibold">{{ agent.balance_currency?.code || '-' }}</td>
+                        <td class="px-4 py-3 font-semibold">
+                            {{ agent.balance_currency?.code || '-' }}
+                            <div v-if="agentCurrencyCodes(agent).length > 1" class="text-[10px] text-gray-400 font-medium">
+                                +{{ agentCurrencyCodes(agent).length - 1 }} {{ $t('agents.moreCurrencies') }}
+                            </div>
+                        </td>
                         <td
                             class="px-4 py-3 text-end font-bold"
                             :class="Number(agent.net_balance) > 0 ? 'text-emerald-600' : Number(agent.net_balance) < 0 ? 'text-rose-600' : 'text-gray-700'"
@@ -332,10 +346,22 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('agents.balanceCurrency') }}</label>
-                    <select v-model="form.balance_currency_id" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
-                        <option value="" disabled>{{ $t('common.select') }}</option>
-                        <option v-for="c in currencies" :key="c.id" :value="c.id">{{ c.code }} — {{ c.name }}</option>
-                    </select>
+                    <label class="flex items-center gap-2 mb-2 text-sm text-gray-700 cursor-pointer select-none">
+                        <input v-model="form.allow_all_currencies" type="checkbox" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                        {{ $t('agents.allCurrencies') }}
+                    </label>
+                    <div v-if="!form.allow_all_currencies" class="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto p-2 rounded-lg border border-gray-200 bg-gray-50/60">
+                        <button
+                            v-for="c in currencies" :key="c.id" type="button"
+                            class="px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors"
+                            :class="form.currency_ids.includes(c.id)
+                                ? 'bg-indigo-600 text-white border-indigo-600'
+                                : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300'"
+                            @click="toggleCurrency(form.currency_ids, c.id)"
+                        >
+                            {{ c.code }}
+                        </button>
+                    </div>
                     <p v-if="errors.balance_currency_id" class="text-xs text-red-600 mt-1">{{ errors.balance_currency_id[0] }}</p>
                     <p class="text-xs text-gray-400 mt-1">{{ $t('agents.receivableNote') }}</p>
                 </div>
@@ -375,6 +401,26 @@
                         <input v-model="editForm.city" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
                     </div>
                 </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('agents.balanceCurrency') }}</label>
+                    <label class="flex items-center gap-2 mb-2 text-sm text-gray-700 cursor-pointer select-none">
+                        <input v-model="editForm.allow_all_currencies" type="checkbox" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                        {{ $t('agents.allCurrencies') }}
+                    </label>
+                    <div v-if="!editForm.allow_all_currencies" class="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto p-2 rounded-lg border border-gray-200 bg-gray-50/60">
+                        <button
+                            v-for="c in currencies" :key="c.id" type="button"
+                            class="px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors"
+                            :class="editForm.currency_ids.includes(c.id)
+                                ? 'bg-indigo-600 text-white border-indigo-600'
+                                : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300'"
+                            @click="toggleCurrency(editForm.currency_ids, c.id)"
+                        >
+                            {{ c.code }}
+                        </button>
+                    </div>
+                    <p v-if="errors.balance_currency_id" class="text-xs text-red-600 mt-1">{{ errors.balance_currency_id[0] }}</p>
+                </div>
                 <LogoPicker v-model="editForm.logo" :name="editForm.name" :existing-url="logoUrl(editTarget)" />
                 <div class="flex justify-end gap-2 pt-2">
                     <button type="button" class="px-4 py-2 text-sm rounded-lg border hover:bg-gray-50" @click="showEdit = false">{{ $t('common.cancel') }}</button>
@@ -394,7 +440,42 @@
                     </div>
                     <StatusBadge :value="balanceData.classification" />
                 </div>
-                <div class="grid grid-cols-2 gap-3 pt-1">
+
+                <!-- Per-currency balances -->
+                <div v-if="balanceData.balances?.length" class="space-y-2">
+                    <div
+                        v-for="row in balanceData.balances"
+                        :key="row.currency_id"
+                        class="p-3 rounded-xl border border-gray-100 bg-gray-50/70"
+                    >
+                        <div class="flex items-center justify-between mb-1.5">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2 py-0.5 rounded bg-slate-900 text-white text-[10px] font-black tracking-wider">
+                                    {{ row.currency || '?' }}
+                                </span>
+                                <StatusBadge :value="row.classification" />
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 text-xs">
+                            <div>
+                                <p class="text-gray-500">{{ $t('agents.receivable') }}</p>
+                                <p class="font-semibold text-emerald-600">{{ money(row.receivable) }}</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500">{{ $t('agents.payable') }}</p>
+                                <p class="font-semibold text-rose-600">{{ money(row.payable) }}</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500">{{ $t('agents.netBalance') }}</p>
+                                <p class="font-bold" :class="row.net > 0 ? 'text-emerald-700' : row.net < 0 ? 'text-rose-600' : 'text-gray-700'">
+                                    {{ money(row.net) }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-else class="grid grid-cols-2 gap-3 pt-1">
                     <div class="p-2.5 rounded-lg bg-gray-50 border border-gray-100">
                         <p class="text-xs text-gray-500">{{ $t('agents.receivable') }}</p>
                         <p class="text-sm font-semibold text-emerald-600">{{ money(balanceData.receivable_balance) }}</p>
@@ -452,6 +533,7 @@
 
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { api, apiError } from '../api/client'
 import { useAgentStore } from '../stores/agent'
 import { money, dateTime } from '../utils/format'
@@ -465,6 +547,7 @@ import { usePermissions } from '../composables/usePermissions'
 
 const agentStore = useAgentStore()
 const { can, isOwner } = usePermissions()
+const { t } = useI18n()
 
 const viewMode = ref('cards')
 const searchQuery = ref('')
@@ -492,6 +575,8 @@ const form = reactive({
     country: '',
     city: '',
     balance_currency_id: '',
+    currency_ids: [],
+    allow_all_currencies: false,
     commission_rate: 0,
     logo: '',
 })
@@ -501,6 +586,8 @@ const editForm = reactive({
     phone: '',
     country: '',
     city: '',
+    currency_ids: [],
+    allow_all_currencies: false,
     commission_rate: 0,
     logo: '',
 })
@@ -520,7 +607,23 @@ const filteredAgents = computed(() => {
     return list
 })
 
+function toggleCurrency(list, currencyId) {
+    const index = list.indexOf(currencyId)
+    if (index === -1) list.push(currencyId)
+    else list.splice(index, 1)
+}
+
+function agentCurrencyCodes(agent) {
+    return (agent.currency_accounts || [])
+        .map((p) => p.currency?.code)
+        .filter(Boolean)
+}
+
 async function create() {
+    if (! form.currency_ids.length) {
+        error.value = t('agents.pickAtLeastOneCurrency')
+        return
+    }
     busy.value = true
     errors.value = {}
     error.value = ''
@@ -530,12 +633,15 @@ async function create() {
             phone: form.phone,
             country: form.country,
             city: form.city,
-            balance_currency_id: form.balance_currency_id,
+            // Keep the legacy single-currency contract; backend accepts a set.
+            balance_currency_id: form.currency_ids[0],
+            currency_ids: [...form.currency_ids],
+            allow_all_currencies: form.allow_all_currencies,
             commission_rate: form.commission_rate,
             logo_url: form.logo ? form.logo : undefined,
         })
         showCreate.value = false
-        Object.assign(form, { name: '', phone: '', country: '', city: '', balance_currency_id: '', commission_rate: 0, logo: '' })
+        Object.assign(form, { name: '', phone: '', country: '', city: '', balance_currency_id: '', currency_ids: [], allow_all_currencies: false, commission_rate: 0, logo: '' })
     } catch (e) {
         const parsed = apiError(e)
         error.value = parsed.message
@@ -552,6 +658,8 @@ function openEdit(agent) {
     editForm.country = agent.country || ''
     editForm.city = agent.city || ''
     editForm.commission_rate = agent.commission_rate || 0
+    editForm.currency_ids = (agent.currency_accounts || []).map((p) => p.currency_id)
+    editForm.allow_all_currencies = !! agent.allow_all_currencies
     editForm.logo = ''
     showEdit.value = true
 }
@@ -567,6 +675,8 @@ async function update() {
             phone: editForm.phone,
             country: editForm.country,
             city: editForm.city,
+            currency_ids: editForm.allow_all_currencies ? null : [...editForm.currency_ids],
+            allow_all_currencies: editForm.allow_all_currencies,
             commission_rate: editForm.commission_rate,
             logo_url: editForm.logo ? editForm.logo : undefined,
         })

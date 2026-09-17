@@ -117,11 +117,8 @@
                     <!-- Send Amount -->
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1">{{ $t('forms.sendAmount') }}</label>
-                        <input
-                            v-model.number="form.send_amount"
-                            type="number"
-                            step="0.01"
-                            min="0.01"
+                        <MoneyInput
+                            v-model="form.send_amount"
                             required
                             class="w-full rounded-xl border border-gray-200 px-3.5 py-2 text-sm font-semibold focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors"
                         />
@@ -159,11 +156,8 @@
                     <!-- Receive Amount -->
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1">{{ $t('forms.receiveAmount') }}</label>
-                        <input
-                            v-model.number="form.receive_amount"
-                            type="number"
-                            step="0.01"
-                            min="0.01"
+                        <MoneyInput
+                            v-model="form.receive_amount"
                             required
                             class="w-full rounded-xl border border-gray-200 px-3.5 py-2 text-sm font-bold text-emerald-700 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors"
                         />
@@ -195,11 +189,8 @@
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1">{{ $t('forms.commissionAmount') }}</label>
-                        <input
-                            v-model.number="form.commission_amount"
-                            type="number"
-                            step="0.01"
-                            min="0"
+                        <MoneyInput
+                            v-model="form.commission_amount"
                             class="w-full rounded-xl border border-gray-200 px-3.5 py-2 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors"
                         />
                         <p v-if="errors.commission_amount" class="text-xs text-rose-600 mt-1">{{ errors.commission_amount[0] }}</p>
@@ -268,6 +259,7 @@ import { api, apiError } from '../api/client'
 import { useAgentStore } from '../stores/agent'
 import { useRemittanceStore } from '../stores/remittance'
 import LogoSelect from '../components/LogoSelect.vue'
+import MoneyInput from '../components/MoneyInput.vue'
 
 const router = useRouter()
 const { t } = useI18n()
@@ -276,8 +268,15 @@ const agentStore = useAgentStore()
 const agentOptions = computed(() =>
     agentStore.agents.map(a => ({
         ...a,
-        sublabel: `${a.balance_currency?.code ?? ''} — ${a.classification}`.trim(),
+        // Show every handled currency for multi-currency agents (or allow_all)
+        sublabel: `${agentCurrencyCodes(a)} — ${a.classification}`.trim(),
     })))
+
+function agentCurrencyCodes(a) {
+    if (a.allow_all_currencies) return 'Any currency'
+    const codes = (a.currency_accounts || []).map(p => p.currency?.code).filter(Boolean)
+    return codes.length ? codes.join(', ') : (a.balance_currency?.code ?? '')
+}
 const remittanceStore = useRemittanceStore()
 
 const currencies = ref([])

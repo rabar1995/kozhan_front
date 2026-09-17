@@ -23,29 +23,39 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
             <h3 class="text-sm font-semibold text-gray-700 mb-4">{{ $t('deals.openTitle') }}</h3>
             <form class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4" @submit.prevent="submitOpen">
+                <!-- Send side -->
                 <div>
-                    <label class="block text-xs font-medium text-gray-500 mb-1">{{ $t('deals.direction') }} *</label>
-                    <select v-model="openForm.direction" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
-                        <option value="deal_send">{{ $t('deals.dealSend') }}</option>
-                        <option value="deal_receive">{{ $t('deals.dealReceive') }}</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-500 mb-1">{{ $t('deals.person') }} *</label>
-                    <input v-model="openForm.counterparty_name" type="text" required
-                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-500 mb-1">{{ $t('deals.wallet') }} *</label>
-                    <LogoSelect v-model="openForm.account_id" :options="wallets" :placeholder="$t('common.select')"
+                    <label class="block text-xs font-medium text-gray-500 mb-1">{{ $t('deals.sendWallet') }} *</label>
+                    <LogoSelect v-model="openForm.send_account_id" :options="wallets" :placeholder="$t('common.select')"
                         sublabel-key="currency_code" />
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-gray-500 mb-1">{{ $t('deals.amount') }} *</label>
-                    <input v-model.number="openForm.amount" type="number" step="0.01" min="0.01" required
+                    <label class="block text-xs font-medium text-gray-500 mb-1">{{ $t('forms.sendAmount') }} *</label>
+                    <MoneyInput v-model="openForm.send_amount" required
                         class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
                 </div>
+
+                <!-- Receive side -->
                 <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">{{ $t('deals.settleWallet') }} <span v-if="openForm.status === 'completed'">*</span></label>
+                    <LogoSelect v-model="openForm.receive_account_id" :options="wallets" :placeholder="$t('common.select')"
+                        sublabel-key="currency_code" />
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">{{ $t('deals.receiveAmount') }} <span v-if="openForm.status === 'completed'">*</span></label>
+                    <MoneyInput v-model="openForm.receive_amount"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+                </div>
+
+                <!-- Status + Note -->
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">{{ $t('deals.status') }} *</label>
+                    <select v-model="openForm.status" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                        <option value="completed">{{ $t('deals.statusDone') }}</option>
+                        <option value="pending">{{ $t('deals.statusPending') }}</option>
+                    </select>
+                </div>
+                <div class="sm:col-span-2">
                     <label class="block text-xs font-medium text-gray-500 mb-1">{{ $t('deals.notes') }}</label>
                     <input v-model="openForm.notes" type="text"
                         class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
@@ -70,9 +80,9 @@
                 >
                     <div class="flex items-center justify-between gap-2">
                         <div class="flex items-center gap-2 min-w-0">
-                            <LogoAvatar :name="d.counterparty_name" :url="wallets.find(w => w.id === d.wallet)?.logo_url || ''" />
+                            <LogoAvatar :name="dealLabel(d)" :url="walletLogoFor(d)" />
                             <div class="min-w-0">
-                                <p class="text-sm font-semibold text-gray-900 truncate">{{ d.counterparty_name }}</p>
+                                <p class="text-sm font-semibold text-gray-900 truncate">{{ dealLabel(d) }}</p>
                                 <p class="text-xs text-gray-400">{{ d.tx_number }} · {{ dateTime(d.created_at) }}</p>
                             </div>
                         </div>
@@ -142,7 +152,7 @@
                                 ← {{ tx.deal_parent.tx_number }}
                             </p>
                         </td>
-                        <td class="px-4 py-3 text-gray-700">{{ tx.counterparty_name }}</td>
+                        <td class="px-4 py-3 text-gray-700">{{ tx.counterparty_name === '—' ? (walletNameFor(tx) || '—') : tx.counterparty_name }}</td>
                         <td class="px-4 py-3 text-gray-500">
                             {{ tx.settle_account ? tx.settleAccount?.name : tx.account?.name }}
                         </td>
@@ -179,7 +189,7 @@
         <Modal :open="settleTarget !== null" :title="$t('deals.settleTitle')">
             <form v-if="settleTarget" class="space-y-4" @submit.prevent="confirmSettle">
                 <div class="bg-gray-50 rounded-lg p-3 text-sm">
-                    <p class="font-semibold text-gray-900">{{ settleTarget.counterparty_name }}</p>
+                    <p class="font-semibold text-gray-900">{{ settleTarget.counterparty_name === '—' ? (walletNameFor(settleTarget) || '—') : settleTarget.counterparty_name }}</p>
                     <p class="text-gray-600">
                         {{ $t(directionLabel(settleTarget.direction)) }} ·
                         {{ money(settleTarget.amount, settleTarget.code) }}
@@ -192,7 +202,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-500 mb-1">{{ $t('deals.settleAmount') }} *</label>
-                    <input v-model.number="settleForm.settle_amount" type="number" step="0.01" min="0.01" required
+                    <MoneyInput v-model="settleForm.settle_amount" required
                         class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
                 </div>
                 <div>
@@ -235,6 +245,7 @@ import { useI18n } from 'vue-i18n'
 import { api, apiError } from '../api/client'
 import { dateTime, money } from '../utils/format'
 import Modal from '../components/Modal.vue'
+import MoneyInput from '../components/MoneyInput.vue'
 import Pagination from '../components/Pagination.vue'
 import LogoSelect from '../components/LogoSelect.vue'
 import LogoAvatar from '../components/LogoAvatar.vue'
@@ -259,11 +270,14 @@ const directionOptions = [
     { value: 'deal_settle', label: 'deals.dealSettle' },
 ]
 
-const openForm = reactive({ direction: 'deal_send', counterparty_name: '', account_id: '', amount: null, notes: '' })
+const openForm = reactive({ status: 'completed', send_account_id: '', send_amount: null, receive_account_id: '', receive_amount: null, notes: '' })
 const settleTarget = ref(null)
 const settleForm = reactive({ settle_account_id: '', settle_amount: null, notes: '' })
 const cancelTarget = ref(null)
 const cancelReason = ref('')
+function resetOpenForm() {
+    Object.assign(openForm, { status: 'completed', send_account_id: '', send_amount: null, receive_account_id: '', receive_amount: null, notes: '' })
+}
 
 function directionLabel(direction) {
     const map = {
@@ -280,10 +294,33 @@ function directionClassLocal(direction) {
     return 'bg-emerald-100 text-emerald-800'
 }
 
+function walletNameFor(deal) {
+    if (! deal) return ''
+    // Summary rows carry the wallet name in `wallet`; history rows carry `account`
+    if (typeof deal.wallet === 'string') return deal.wallet
+    if (deal.account?.name) return deal.account.name
+    return ''
+}
+
+function dealLabel(deal) {
+    return deal?.counterparty_name && deal.counterparty_name !== '—'
+        ? deal.counterparty_name
+        : (walletNameFor(deal) || '—')
+}
+
+function walletLogoFor(deal) {
+    // Summary rows: `wallet` is a name; fall back to id match for other shapes
+    const w = typeof deal?.wallet === 'string' && deal.wallet !== '—'
+        ? wallets.value.find((x) => x.name === deal.wallet)
+        : wallets.value.find((x) => x.id === deal?.wallet)
+    return w?.logo_url || ''
+}
+
 function openSettle(deal) {
     settleTarget.value = deal
-    settleForm.settle_account_id = ''
-    settleForm.settle_amount = deal.amount
+    // Prefill from the planned receive side saved when the deal was opened
+    settleForm.settle_account_id = deal?.settle_account_id || ''
+    settleForm.settle_amount = deal?.settle_amount || deal?.amount || null
     settleForm.notes = ''
 }
 
@@ -320,10 +357,13 @@ async function submitOpen() {
     error.value = ''
     message.value = ''
     try {
-        const res = await api.post('/exchange-deals', { ...openForm })
+        const res = await api.post('/exchange-deals', {
+            ...openForm,
+            receive_account_id: openForm.receive_account_id || null,
+            receive_amount: openForm.receive_amount ? Number(openForm.receive_amount) : null,
+        })
         message.value = res.data.message
-        Object.assign(openForm, { counterparty_name: '', account_id: '', amount: null, notes: '' })
-        openForm.direction = 'deal_send'
+        resetOpenForm()
         await Promise.all([loadBase(), loadDeals()])
     } catch (e) {
         error.value = apiError(e).message

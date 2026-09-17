@@ -20,7 +20,7 @@
                     <tr>
                         <th class="px-4 py-3">{{ $t('common.name') }}</th>
                         <th class="px-4 py-3">{{ $t('users.username') }}</th>
-                        <th class="px-4 py-3">{{ $t('users.email') }}</th>
+                        <th class="px-4 py-3">{{ $t('users.phone') }}</th>
                         <th class="px-4 py-3">{{ $t('users.role') }}</th>
                         <th class="px-4 py-3">{{ $t('common.status') }}</th>
                         <th class="px-4 py-3">{{ $t('users.lastLogin') }}</th>
@@ -37,7 +37,7 @@
                     <tr v-for="user in users" :key="user.id" class="hover:bg-gray-50">
                         <td class="px-4 py-3 font-medium text-gray-900">{{ user.name }}</td>
                         <td class="px-4 py-3 text-gray-600">{{ user.username }}</td>
-                        <td class="px-4 py-3 text-gray-600">{{ user.email }}</td>
+                        <td class="px-4 py-3 text-gray-600">{{ user.phone || '-' }}</td>
                         <td class="px-4 py-3">
                             <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium"
                                 :class="user.role === 'owner' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'">
@@ -89,9 +89,12 @@
                     </div>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('users.emailRequired') }}</label>
-                    <input v-model="form.email" type="email" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
-                    <p v-if="errors.email" class="text-xs text-red-600 mt-1">{{ errors.email[0] }}</p>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('users.phoneRequired') }}</label>
+                    <input v-model="form.phone" type="tel" required
+                        :placeholder="$t('users.phonePlaceholder')"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+                    <p v-if="errors.phone" class="text-xs text-red-600 mt-1">{{ errors.phone[0] }}</p>
+                    <p class="text-xs text-gray-400 mt-1">{{ $t('users.phoneLoginNote') }}</p>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">
@@ -129,7 +132,7 @@ const errors = ref({})
 
 const showForm = ref(false)
 const editing = ref(null)
-const form = ref({ name: '', username: '', email: '', password: '', role: 'office_manager' })
+const form = ref({ name: '', username: '', phone: '', password: '', role: 'office_manager' })
 
 async function load() {
     loading.value = true
@@ -144,14 +147,14 @@ async function load() {
 
 function openCreate() {
     editing.value = null
-    form.value = { name: '', username: '', email: '', password: '', role: 'office_manager' }
+    form.value = { name: '', username: '', phone: '', password: '', role: 'office_manager' }
     errors.value = {}
     showForm.value = true
 }
 
 function openEdit(user) {
     editing.value = user
-    form.value = { name: user.name, username: user.username, email: user.email, password: '', role: user.role }
+    form.value = { name: user.name, username: user.username, phone: user.phone || '', password: '', role: user.role }
     errors.value = {}
     showForm.value = true
 }
