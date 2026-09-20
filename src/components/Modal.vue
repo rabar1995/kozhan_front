@@ -1,10 +1,10 @@
 <template>
     <Teleport to="body">
         <Transition name="modal-backdrop">
-            <div v-if="open" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px]" @click="$emit('close')" />
+            <div v-if="open" class="fixed inset-0 bg-black/50 backdrop-blur-[2px]" :style="{ zIndex }" @click="$emit('close')" />
         </Transition>
         <Transition name="modal">
-            <div v-if="open" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 pointer-events-none">
+            <div v-if="open" class="fixed inset-0 flex items-end sm:items-center justify-center p-0 sm:p-4 pointer-events-none" :style="{ zIndex }">
                 <div class="relative w-full pointer-events-auto rounded-t-2xl sm:rounded-xl bg-white shadow-2xl"
                      :class="[maxWidth, 'max-h-[92vh] sm:max-h-[85vh]']"
                 >
@@ -30,6 +30,7 @@ defineProps({
     open: { type: Boolean, default: false },
     title: { type: String, default: '' },
     maxWidth: { type: String, default: 'sm:max-w-lg' },
+    zIndex: { type: Number, default: 50 },
 })
 
 defineEmits(['close'])

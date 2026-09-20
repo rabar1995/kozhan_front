@@ -16,6 +16,7 @@
                         <option value="" disabled>{{ $t('common.select') }}</option>
                         <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
                     </select>
+                    <p v-if="!categories.length" class="text-xs text-blue-600 bg-blue-50 border border-blue-100 rounded px-2 py-1 mt-1">{{ $t('expenses.noCategories') }}</p>
                     <p v-if="errors.expense_category_id" class="text-xs text-red-600 mt-1">{{ errors.expense_category_id[0] }}</p>
                 </div>
                 <div>
@@ -32,16 +33,6 @@
                         </option>
                     </select>
                     <p v-if="errors.paid_from_account_id" class="text-xs text-red-600 mt-1">{{ errors.paid_from_account_id[0] }}</p>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('expenses.expenseAccount') }}</label>
-                    <select v-model="form.expense_account_id" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
-                        <option value="" disabled>{{ $t('common.select') }}</option>
-                        <option v-for="a in expenseAccounts" :key="a.id" :value="a.id">
-                            {{ a.name }} ({{ a.currency?.code }})
-                        </option>
-                    </select>
-                    <p v-if="errors.expense_account_id" class="text-xs text-red-600 mt-1">{{ errors.expense_account_id[0] }}</p>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('expenses.amountRequired') }}</label>
@@ -98,7 +89,6 @@ const errors = ref({})
 const form = reactive({
     expense_category_id: '',
     paid_from_account_id: '',
-    expense_account_id: '',
     amount: null,
     currency_id: '',
     description: '',
@@ -107,10 +97,6 @@ const form = reactive({
 
 const cashAccounts = computed(() =>
     accountStore.accounts.filter((a) => ['cash_safe', 'e_wallet', 'bank_account'].includes(a.account_type?.code) && a.is_active),
-)
-
-const expenseAccounts = computed(() =>
-    accountStore.accounts.filter((a) => ['operating_expense', 'commission_expense'].includes(a.account_type?.code) && a.is_active),
 )
 
 onMounted(async () => {
@@ -134,7 +120,6 @@ async function submit() {
         Object.assign(form, {
             expense_category_id: '',
             paid_from_account_id: '',
-            expense_account_id: '',
             amount: null,
             description: '',
         })

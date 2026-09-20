@@ -122,62 +122,90 @@
                 class="rounded-lg border border-gray-300 px-3 py-2 text-sm" />
         </div>
 
-        <!-- History -->
+        <!-- History (one row per deal, newest first from the API) -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
             <table class="min-w-full text-sm">
                 <thead class="bg-gray-50 text-start text-xs uppercase tracking-wide text-gray-500">
                     <tr>
+                        <th class="px-3 py-3 w-8"></th>
                         <th class="px-4 py-3">{{ $t('remittances.number') }}</th>
                         <th class="px-4 py-3">{{ $t('common.type') }}</th>
                         <th class="px-4 py-3">{{ $t('deals.person') }}</th>
-                        <th class="px-4 py-3">{{ $t('deals.wallet') }}</th>
                         <th class="px-4 py-3 text-end">{{ $t('deals.amount') }}</th>
-                        <th class="px-4 py-3 text-end">{{ $t('deals.settleAmount') }}</th>
                         <th class="px-4 py-3">{{ $t('common.status') }}</th>
-                        <th class="px-4 py-3">{{ $t('remittances.created') }}</th>
-                        <th class="px-4 py-3">{{ $t('common.actions') }}</th>
+                        <th class="px-4 py-3 text-end">{{ $t('common.actions') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
-                    <tr v-if="!deals.length">
-                        <td colspan="9" class="px-4 py-8 text-center text-gray-400">{{ $t('deals.noDeals') }}</td>
+                    <tr v-if="!historyRows.length">
+                        <td colspan="7" class="px-4 py-8 text-center text-gray-400">{{ $t('deals.noDeals') }}</td>
                     </tr>
-                    <tr v-for="tx in deals" :key="tx.id" class="hover:bg-gray-50">
-                        <td class="px-4 py-3 font-medium text-gray-900">{{ tx.tx_number }}</td>
-                        <td class="px-4 py-3">
-                            <span class="px-2 py-1 rounded text-xs font-semibold" :class="directionClassLocal(tx.direction)">
-                                {{ $t(directionLabel(tx.direction)) }}
-                            </span>
-                            <p v-if="tx.deal_parent" class="text-[11px] text-gray-400 mt-0.5">
-                                ← {{ tx.deal_parent.tx_number }}
-                            </p>
-                        </td>
-                        <td class="px-4 py-3 text-gray-700">{{ tx.counterparty_name === '—' ? (walletNameFor(tx) || '—') : tx.counterparty_name }}</td>
-                        <td class="px-4 py-3 text-gray-500">
-                            {{ tx.settle_account ? tx.settleAccount?.name : tx.account?.name }}
-                        </td>
-                        <td class="px-4 py-3 text-end">
-                            {{ tx.direction === 'deal_settle' ? '—' : money(tx.amount, tx.currency?.code) }}
-                        </td>
-                        <td class="px-4 py-3 text-end">
-                            {{ tx.direction === 'deal_settle'
-                                ? money(tx.settle_amount, tx.settle_currency?.code) : '—' }}
-                        </td>
-                        <td class="px-4 py-3">
-                            <span class="px-2 py-1 rounded text-xs font-semibold" :class="tx.status === 'completed'
-                                ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
-                                {{ $t('status.' + tx.status) }}
-                            </span>
-                        </td>
-                        <td class="px-4 py-3 text-gray-500 text-xs">{{ dateTime(tx.created_at) }}</td>
-                        <td class="px-4 py-3">
-                            <button
-                                v-if="tx.status === 'completed'"
-                                class="text-xs px-2 py-1 rounded border border-red-200 text-red-600 hover:bg-red-50"
-                                @click="openCancel(tx)"
-                            >{{ $t('expenses.voidBtn') }}</button>
-                        </td>
-                    </tr>
+                    <template v-for="tx in historyRows" :key="tx.id">
+                        <tr class="hover:bg-gray-50/80 transition-colors cursor-pointer" @click="toggleExpand(tx.id)">
+                            <td class="px-3 py-3 ps-4">
+                                <svg
+                                    class="w-4 h-4 transition-transform text-gray-300"
+                                    :class="{ 'rotate-90 text-indigo-500': expandedIds.has(tx.id) }"
+                                    fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
+                                >
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </td>
+                            <td class="px-4 py-3">
+                                <p class="font-medium text-gray-900">{{ tx.tx_number }}</p>
+                                <p class="text-[11px] text-gray-400">{{ dateTime(tx.created_at) }}</p>
+                            </td>
+                            <td class="px-4 py-3">
+                                <span class="px-2 py-1 rounded text-xs font-semibold" :class="directionClassLocal(tx.direction)">
+                                    {{ $t(directionLabel(tx.direction)) }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-gray-700">
+                                {{ dealLabel(tx) }}
+                                <span v-if="tx.settle_account" class="block text-[11px] text-gray-400">{{ tx.settleAccount?.name }}</span>
+                            </td>
+                            <td class="px-4 py-3 text-end font-bold text-gray-900">
+                                {{ money(tx.amount, tx.currency?.code) }}
+                            </td>
+                            <td class="px-4 py-3">
+                                <span class="px-2 py-1 rounded text-xs font-semibold" :class="dealStatusClass(tx)">
+                                    {{ $t(dealStatusLabel(tx), { count: tx.deal_settlements?.length }) }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-end whitespace-nowrap">
+                                <button
+                                    v-if="canSettle(tx)"
+                                    class="text-xs px-2 py-1 rounded border border-emerald-200 text-emerald-700 hover:bg-emerald-50 me-2"
+                                    @click.stop="openSettle(tx)"
+                                >{{ $t('deals.settle') }}</button>
+                                <button
+                                    v-if="tx.status === 'completed'"
+                                    class="text-xs px-2 py-1 rounded border border-red-200 text-red-600 hover:bg-red-50"
+                                    @click.stop="openCancel(tx)"
+                                >{{ $t('expenses.voidBtn') }}</button>
+                            </td>
+                        </tr>
+                        <tr v-if="expandedIds.has(tx.id)" class="bg-gray-50/60">
+                            <td class="py-1" colspan="7">
+                                <div class="px-4 sm:px-10 py-2 border-t border-dashed border-gray-200">
+                                    <div v-if="!tx.deal_settlements?.length" class="text-xs text-gray-400 py-1">
+                                        {{ $t('deals.unsettledNote') }}
+                                    </div>
+                                    <ul v-else class="divide-y divide-gray-100">
+                                        <li v-for="leg in tx.deal_settlements" :key="leg.id" class="flex flex-wrap items-center gap-x-4 gap-y-1 py-2 text-xs">
+                                            <span class="font-medium text-gray-900">{{ leg.tx_number }}</span>
+                                            <span class="text-gray-500">{{ dateTime(leg.created_at) }}</span>
+                                            <span class="font-bold text-gray-900">{{ money(leg.settle_amount, leg.settle_currency?.code) }}</span>
+                                            <span class="text-gray-600">{{ leg.settleAccount?.name || '—' }}</span>
+                                            <span class="text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-semibold border border-emerald-100">
+                                                {{ $t('status.completed') }}
+                                            </span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                    </template>
                 </tbody>
             </table>
             <div class="px-4 pb-3">
@@ -257,6 +285,33 @@ const summary = ref({ pending_accounts: [], pending_deals: [] })
 const deals = ref([])
 const meta = ref(null)
 const page = ref(1)
+const expandedIds = ref(new Set())
+
+// One row per deal: main legs only (settle legs live in the expandable sub-row)
+const historyRows = computed(() => deals.value.filter((tx) => tx.direction !== 'deal_settle'))
+
+function toggleExpand(id) {
+    const next = new Set(expandedIds.value)
+    if (next.has(id)) next.delete(id)
+    else next.add(id)
+    expandedIds.value = next
+}
+
+function dealStatusClass(tx) {
+    if (tx.status !== 'completed') return 'bg-red-100 text-red-800'
+    return tx.deal_settlements?.length
+        ? 'bg-green-100 text-green-800'
+        : 'bg-amber-100 text-amber-800'
+}
+
+function dealStatusLabel(tx) {
+    if (tx.status !== 'completed') return 'status.cancelled'
+    return tx.deal_settlements?.length ? 'deals.settledBadge' : 'deals.unsettled'
+}
+
+function canSettle(tx) {
+    return tx.status === 'completed' && !tx.deal_settlements?.length
+}
 
 const busy = ref(false)
 const error = ref('')

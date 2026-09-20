@@ -276,7 +276,20 @@
         "newSafe": "+ New Cash Safe",
         "createSafeTitle": "New Cash Safe",
         "openingBalance": "Opening balance",
-        "openingBalanceHint": "Optional — posts a balanced opening-balance entry against Owner's Equity."
+        "openingBalanceHint": "Optional — posts a balanced opening-balance entry against Owner's Equity.",
+        "delete": "Delete",
+        "inactive": "Inactive",
+        "activate": "Activate",
+        "deactivate": "Deactivate",
+        "deleteTitle": "Delete Wallet",
+        "deleteConfirm": "Permanently delete the wallet \"{name}\"? This is only possible if its balance is zero and it has no ledger history. Otherwise it will be deactivated instead.",
+        "deleteActive": "This is not reversible for wallets with ledger history.",
+        "currentBalance": "Current balance",
+        "newBalance": "Balance",
+        "balanceChangeTitle": "Confirm Balance Change",
+        "balanceChangeConfirm": "Change the balance of \"{name}\" from {old} to {new}? This posts a ledger adjustment transaction and cannot be done silently.",
+        "forceDelete": "Force delete permanently",
+        "forceDeleteNote": "This erases the wallet together with its ledger history records (opening balances, adjustments and any transactions posted through it). This is permanent."
     },
     "expenses": {
         "intro": "Operational expenses.",
@@ -295,6 +308,7 @@
         "dateRequired": "Date *",
         "paidFromRequired": "Paid from (cash source) *",
         "expenseAccount": "Expense account *",
+        "noCategories": "No expense categories yet. Default categories are added automatically by the system setup.",
         "amountRequired": "Amount *",
         "currencyRequired": "Currency *",
         "descriptionRequired": "Description *",
@@ -405,7 +419,10 @@
         "settleAmount": "Settle amount *",
         "settleNote": "Profit/loss is computed automatically from the deal amount and the settlement amount.",
         "cancelTitle": "Cancel Deal",
-        "noDeals": "No exchange deals yet."
+        "noDeals": "No exchange deals yet.",
+        "settledBadge": "Settled ({count})",
+        "unsettled": "Unsettled",
+        "unsettledNote": "No settlements booked yet for this deal."
     },
     "logos": {
         "title": "Logo (image or URL)",
