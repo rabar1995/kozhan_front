@@ -110,7 +110,7 @@
 
             <!-- Middle Section: Cash Safes + Urgent Payouts -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
-                <CashSafeOverview ref="cashRef" />
+                <CashSafeOverview v-if="isOwner" ref="cashRef" />
                 <UrgentPayoutsFeed ref="urgentRef" @complete="openCompletePayout" />
             </div>
 
@@ -147,9 +147,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Live Exchange Rates -->
-                <LiveRatesWidget ref="ratesRef" />
             </div>
         </template>
 
@@ -195,7 +192,7 @@ import KpiCard from '../components/KpiCard.vue'
 import CashSafeOverview from '../components/CashSafeOverview.vue'
 import PrivateWalletsOverview from '../components/PrivateWalletsOverview.vue'
 import UrgentPayoutsFeed from '../components/UrgentPayoutsFeed.vue'
-import LiveRatesWidget from '../components/LiveRatesWidget.vue'
+
 import Modal from '../components/Modal.vue'
 
 const { t } = useI18n()
@@ -232,7 +229,6 @@ const completeBusy = ref(false)
 const cashRef = ref(null)
 const privateRef = ref(null)
 const urgentRef = ref(null)
-const ratesRef = ref(null)
 
 const payAccounts = computed(() =>
     accountStore.accounts.filter((a) => ['cash_safe', 'e_wallet', 'bank_account'].includes(a.account_type?.code) && a.is_active),
@@ -287,7 +283,6 @@ async function refreshAll() {
         cashRef.value?.load?.() || accountStore.fetchAccounts({ active: 1 }).catch(() => {}),
         privateRef.value?.load?.(),
         urgentRef.value?.load?.(),
-        ratesRef.value?.load?.(),
     ])
     refreshing.value = false
 }

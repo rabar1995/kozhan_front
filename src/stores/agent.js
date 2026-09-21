@@ -27,9 +27,6 @@ export const useAgentStore = defineStore('agent', {
             await this.fetchAgents()
             return res.data
         },
-        balance(id) {
-            return api.get(`/agents/${id}/balance`)
-        },
         ledger(id, params = {}) {
             return api.get(`/agents/${id}/ledger`, { params })
         },

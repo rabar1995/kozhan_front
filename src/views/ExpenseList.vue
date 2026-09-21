@@ -15,7 +15,7 @@
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
-            <table class="min-w-full text-sm">
+            <table class="min-w-full text-sm table-enhanced">
                 <thead class="bg-gray-50 text-start text-xs uppercase tracking-wide text-gray-500">
                     <tr>
                         <th class="px-4 py-3">{{ $t('expenses.date') }}</th>
@@ -64,11 +64,15 @@ import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { api, apiError } from '../api/client'
 import { usePermissions } from '../composables/usePermissions'
+import { useConfirm } from '../composables/useConfirm'
+import { useToast } from '../composables/useToast'
 import { money, dateOnly } from '../utils/format'
 import Pagination from '../components/Pagination.vue'
 
 const { t } = useI18n()
 const { can } = usePermissions()
+const { confirm } = useConfirm()
+const { showToast } = useToast()
 
 const expenses = ref([])
 const meta = ref(null)
@@ -89,9 +93,17 @@ async function load(page = 1) {
 }
 
 async function voidExpense(expense) {
-    if (! confirm(t('expenses.voidConfirm', { description: expense.description }))) return
+    const ok = await confirm({
+        title: t('expenses.voidBtn'),
+        message: t('expenses.voidConfirm', { description: expense.description }),
+        type: 'danger',
+        confirmText: t('expenses.voidBtn'),
+        cancelText: t('common.cancel'),
+    })
+    if (!ok) return
     try {
         await api.patch(`/expenses/${expense.id}/void`)
+        showToast({ message: t('expenses.voided'), type: 'success' })
         await load(meta.value?.current_page || 1)
     } catch (e) {
         error.value = apiError(e).message

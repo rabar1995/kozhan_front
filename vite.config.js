@@ -19,8 +19,8 @@ export default defineConfig({
                 'kozhanfx.png',
             ],
             manifest: {
-                name: 'Kozhan FX - Money Exchange & Remittance',
-                short_name: 'Kozhan FX',
+                name: 'Kozhan Co - Money Exchange & Remittance',
+                short_name: 'Kozhan Co',
                 description: 'Professional Currency Exchange & Hawala Remittance Management System',
                 theme_color: '#4f46e5',
                 background_color: '#0f172a',

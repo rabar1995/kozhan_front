@@ -4,8 +4,8 @@
             <div class="flex justify-end mb-3">
                 <LanguageSwitcher dark />
             </div>
-            <img src="/kozhanfx.png" alt="Kozhan FX" class="w-20 h-20 mx-auto mb-3 rounded-2xl shadow-lg" />
-            <h1 class="text-3xl font-bold text-white">Kozhan FX</h1>
+            <img src="/kozhanfx.png" alt="Kozhan Co" class="w-20 h-20 mx-auto mb-3 rounded-2xl shadow-lg" />
+            <h1 class="text-3xl font-bold text-white">Kozhan Co</h1>
             <p class="text-slate-400 mt-1 text-sm">{{ $t('auth.tagline') }}</p>
         </div>
 

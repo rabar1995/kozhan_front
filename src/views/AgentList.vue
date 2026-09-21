@@ -165,13 +165,6 @@
                             </svg>
                             <span>{{ agent.phone }}</span>
                         </a>
-
-                        <span
-                            v-if="Number(agent.commission_rate) > 0"
-                            class="inline-flex items-center px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200/60 text-[10px] font-semibold"
-                        >
-                            {{ agent.commission_rate }}% {{ $t('forms.commission') }}
-                        </span>
                     </div>
 
                     <!-- Currency badges (multi-currency agents) -->
@@ -258,7 +251,7 @@
             v-else
             class="bg-white rounded-2xl shadow-xs border border-gray-100 overflow-x-auto"
         >
-            <table class="min-w-full text-sm">
+            <table class="min-w-full text-sm table-enhanced">
                 <thead class="bg-gray-50 text-start text-xs uppercase tracking-wide text-gray-500 border-b border-gray-100">
                     <tr>
                         <th class="px-4 py-3">{{ $t('common.name') }}</th>
@@ -276,9 +269,6 @@
                                 <LogoAvatar :name="agent.name" :url="agent.logo_url" size="lg" />
                                 <div>
                                     <span class="font-bold text-gray-900">{{ agent.name }}</span>
-                                    <p v-if="agent.commission_rate" class="text-[10px] text-gray-400">
-                                        {{ agent.commission_rate }}% {{ $t('forms.commission') }}
-                                    </p>
                                 </div>
                             </div>
                         </td>
@@ -325,15 +315,10 @@
                     <input v-model="form.name" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
                     <p v-if="errors.name" class="text-xs text-red-600 mt-1">{{ errors.name[0] }}</p>
                 </div>
-                <div class="grid grid-cols-2 gap-3">
+                    <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('agents.phone') }}</label>
                         <input v-model="form.phone" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('agents.commissionRate') }}</label>
-                        <input v-model.number="form.commission_rate" type="number" step="0.01" min="0" max="100"
-                            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('agents.country') }}</label>
@@ -363,7 +348,7 @@
                         </button>
                     </div>
                     <p v-if="errors.balance_currency_id" class="text-xs text-red-600 mt-1">{{ errors.balance_currency_id[0] }}</p>
-                    <p class="text-xs text-gray-400 mt-1">{{ $t('agents.receivableNote') }}</p>
+                    <p class="text-xs text-gray-400 mt-1">{{ $t('agents.walletNote') }}</p>
                 </div>
                 <LogoPicker v-model="form.logo" :name="form.name" />
                 <div class="flex justify-end gap-2 pt-2">
@@ -386,11 +371,6 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('agents.phone') }}</label>
                         <input v-model="editForm.phone" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('agents.commissionRate') }}</label>
-                        <input v-model.number="editForm.commission_rate" type="number" step="0.01" min="0" max="100"
-                            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('agents.country') }}</label>
@@ -441,7 +421,7 @@
                     <StatusBadge :value="balanceData.classification" />
                 </div>
 
-                <!-- Per-currency balances -->
+                <!-- Per-currency net balances (single signed card) -->
                 <div v-if="balanceData.balances?.length" class="space-y-2">
                     <div
                         v-for="row in balanceData.balances"
@@ -456,34 +436,20 @@
                                 <StatusBadge :value="row.classification" />
                             </div>
                         </div>
-                        <div class="grid grid-cols-3 gap-2 text-xs">
-                            <div>
-                                <p class="text-gray-500">{{ $t('agents.receivable') }}</p>
-                                <p class="font-semibold text-emerald-600">{{ money(row.receivable) }}</p>
-                            </div>
-                            <div>
-                                <p class="text-gray-500">{{ $t('agents.payable') }}</p>
-                                <p class="font-semibold text-rose-600">{{ money(row.payable) }}</p>
-                            </div>
-                            <div>
-                                <p class="text-gray-500">{{ $t('agents.netBalance') }}</p>
-                                <p class="font-bold" :class="row.net > 0 ? 'text-emerald-700' : row.net < 0 ? 'text-rose-600' : 'text-gray-700'">
-                                    {{ money(row.net) }}
-                                </p>
-                            </div>
-                        </div>
+                        <p class="text-xl font-bold" :class="row.net > 0 ? 'text-emerald-700' : row.net < 0 ? 'text-rose-600' : 'text-gray-700'">
+                            {{ money(row.net) }}
+                        </p>
+                        <p class="text-[11px] text-gray-500 mt-0.5">
+                            {{ $t(row.net > 0 ? 'agents.owesYou' : row.net < 0 ? 'agents.youOwe' : 'agents.settledNote') }}
+                        </p>
                     </div>
                 </div>
 
-                <div v-else class="grid grid-cols-2 gap-3 pt-1">
-                    <div class="p-2.5 rounded-lg bg-gray-50 border border-gray-100">
-                        <p class="text-xs text-gray-500">{{ $t('agents.receivable') }}</p>
-                        <p class="text-sm font-semibold text-emerald-600">{{ money(balanceData.receivable_balance) }}</p>
-                    </div>
-                    <div class="p-2.5 rounded-lg bg-gray-50 border border-gray-100">
-                        <p class="text-xs text-gray-500">{{ $t('agents.payable') }}</p>
-                        <p class="text-sm font-semibold text-rose-600">{{ money(balanceData.payable_balance) }}</p>
-                    </div>
+                <div v-else class="p-3 rounded-xl border border-gray-100 bg-gray-50/70">
+                    <p class="text-xs text-gray-500">{{ $t('agents.netBalance') }}</p>
+                    <p class="text-lg font-bold" :class="(Number(balanceData.net_balance) || 0) > 0 ? 'text-emerald-700' : (Number(balanceData.net_balance) || 0) < 0 ? 'text-rose-600' : 'text-gray-700'">
+                        {{ money(balanceData.net_balance, balanceData.currency) }}
+                    </p>
                 </div>
             </div>
         </Modal>
@@ -577,7 +543,6 @@ const form = reactive({
     balance_currency_id: '',
     currency_ids: [],
     allow_all_currencies: false,
-    commission_rate: 0,
     logo: '',
 })
 
@@ -588,7 +553,6 @@ const editForm = reactive({
     city: '',
     currency_ids: [],
     allow_all_currencies: false,
-    commission_rate: 0,
     logo: '',
 })
 
@@ -637,11 +601,10 @@ async function create() {
             balance_currency_id: form.currency_ids[0],
             currency_ids: [...form.currency_ids],
             allow_all_currencies: form.allow_all_currencies,
-            commission_rate: form.commission_rate,
             logo_url: form.logo ? form.logo : undefined,
         })
         showCreate.value = false
-        Object.assign(form, { name: '', phone: '', country: '', city: '', balance_currency_id: '', currency_ids: [], allow_all_currencies: false, commission_rate: 0, logo: '' })
+        Object.assign(form, { name: '', phone: '', country: '', city: '', balance_currency_id: '', currency_ids: [], allow_all_currencies: false, logo: '' })
     } catch (e) {
         const parsed = apiError(e)
         error.value = parsed.message
@@ -657,7 +620,6 @@ function openEdit(agent) {
     editForm.phone = agent.phone || ''
     editForm.country = agent.country || ''
     editForm.city = agent.city || ''
-    editForm.commission_rate = agent.commission_rate || 0
     editForm.currency_ids = (agent.currency_accounts || []).map((p) => p.currency_id)
     editForm.allow_all_currencies = !! agent.allow_all_currencies
     editForm.logo = ''
@@ -677,7 +639,6 @@ async function update() {
             city: editForm.city,
             currency_ids: editForm.allow_all_currencies ? null : [...editForm.currency_ids],
             allow_all_currencies: editForm.allow_all_currencies,
-            commission_rate: editForm.commission_rate,
             logo_url: editForm.logo ? editForm.logo : undefined,
         })
         showEdit.value = false
@@ -706,7 +667,16 @@ onMounted(async () => {
 
 async function openBalance(agent) {
     try {
-        balanceData.value = (await agentStore.balance(agent.id)).data.data
+        // Built from already-eager-loaded agent data (no extra request):
+        // the /agents/{id}/balance endpoint was removed as dead code.
+        balanceData.value = {
+            name: agent.name,
+            net_balance: agent.net_balance,
+            currency: agent.balance_currency?.code,
+            classification: agent.classification,
+            allow_all_currencies: !! agent.allow_all_currencies,
+            balances: agent.balances || [],
+        }
         showBalance.value = true
     } catch (e) {
         error.value = apiError(e).message

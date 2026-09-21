@@ -33,7 +33,11 @@
         "search": "Search…",
         "cards": "Cards",
         "table": "Table",
-        "noResults": "No results found"
+        "noResults": "No results found",
+        "theme": "Theme",
+        "lightMode": "Light Mode",
+        "darkMode": "Dark Mode",
+        "toggleTheme": "Toggle theme"
     },
     "nav": {
         "login": "Login",
@@ -224,7 +228,7 @@
         "amountCollected": "Amount collected from client *",
         "collectCurrency": "Collect currency *",
         "commissionType": "Commission type *",
-        "spreadNote": "The numeric spread between collected and sent amounts is booked as commission revenue/expense automatically."
+        "spreadNote": "The numeric spread between collected and sent amounts is booked automatically on the single Commission card (credits increase, debits decrease its net)."
     },
     "agents": {
         "intro": "Counterparties with debtor/creditor status.",
@@ -245,10 +249,14 @@
         "allCurrencies": "All currencies (any currency works)",
         "pickAtLeastOneCurrency": "Pick at least one currency, or tick \"All currencies\".",
         "moreCurrencies": "more currencies",
-        "receivableNote": "A receivable and payable account is created per currency.",
+        "receivableNote": "One net-balance wallet per currency.",
         "createAgentBtn": "Create Agent",
         "receivable": "Receivable:",
-        "payable": "Payable:"
+        "payable": "Payable:",
+        "walletNote": "One signed wallet per currency: debit bookings increase it (agent owes you), credit bookings decrease it (you owe the agent).",
+        "owesYou": "The agent owes you this amount.",
+        "youOwe": "You owe the agent this amount.",
+        "settledNote": "Balance is settled — nothing owed."
     },
     "accounts": {
         "allWallets": "All safes and wallets.",
@@ -266,6 +274,7 @@
         "createTitle": "New Wallet / Account",
         "editTitle": "Edit Wallet",
         "currencyLocked": "The currency can only be changed when the wallet balance is zero.",
+        "balanceLocked": "This balance is managed automatically — it only moves through remittances, payouts, settlements or exchange deals.",
         "editLocked": "Editing is locked",
         "nameRequired": "Name *",
         "typeRequired": "Type *",
@@ -276,7 +285,7 @@
         "newSafe": "+ New Cash Safe",
         "createSafeTitle": "New Cash Safe",
         "openingBalance": "Opening balance",
-        "openingBalanceHint": "Optional — posts a balanced opening-balance entry against Owner's Equity.",
+        "openingBalanceHint": "Optional — posts a balanced opening-balance entry in the ledger.",
         "delete": "Delete",
         "inactive": "Inactive",
         "activate": "Activate",
@@ -446,12 +455,35 @@
     "pwa": {
         "offline": "You are currently offline. Displaying cached data.",
         "online": "Internet connection restored!",
-        "installApp": "Install Kozhan FX App",
-        "installDesc": "Install Kozhan FX on your device for fast, full-screen access and offline support.",
+        "installApp": "Install Kozhan Co App",
+        "installDesc": "Install Kozhan Co on your device for fast, full-screen access and offline support.",
         "installBtn": "Install App",
         "dismiss": "Not Now",
         "guideTitle": "How to Install",
-        "guideStep1": "In Chrome or Edge, click the Install icon in the address bar or choose 'Install Kozhan FX' from the browser menu.",
+        "guideStep1": "In Chrome or Edge, click the Install icon in the address bar or choose 'Install Kozhan Co' from the browser menu.",
         "guideStep2": "On iOS Safari, tap the Share button and select 'Add to Home Screen'."
+    },
+    "settings": {
+        "title": "Settings",
+        "description": "Customize your dashboard preferences, theme, and application options.",
+        "appearance": "Appearance & Theme",
+        "appearanceDesc": "Choose your preferred color theme or match your device.",
+        "light": "Light Mode",
+        "lightDesc": "Clean daytime view",
+        "dark": "Night Mode",
+        "darkDesc": "Easy on the eyes in dark spaces",
+        "system": "System",
+        "systemDesc": "Match device settings",
+        "language": "Language & Region",
+        "languageDesc": "Select your interface language and text direction.",
+        "application": "Desktop & Mobile App",
+        "applicationDesc": "Run Kozhan Co as a fast standalone app with offline capabilities.",
+        "installedBadge": "Installed",
+        "installedDesc": "App is installed and running in standalone window mode.",
+        "notInstalledDesc": "Install Kozhan Co for instant dock/desktop launch and offline work.",
+        "installNow": "Install App",
+        "offlineReady": "Offline Ready",
+        "active": "Active",
+        "done": "Done"
     }
 }

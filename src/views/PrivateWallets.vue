@@ -83,35 +83,35 @@
 
         <!-- ═══════ LOADING STATE ═══════ -->
         <div v-if="accountStore.loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            <div v-for="n in 4" :key="n" class="bg-white rounded-2xl border border-gray-100 p-5 shadow-xs animate-pulse space-y-4">
+            <div v-for="n in 4" :key="n" class="bg-white rounded-2xl border border-gray-100 p-5 shadow-xs space-y-4">
                 <div class="flex items-center justify-between">
-                    <div class="w-10 h-10 rounded-xl bg-gray-200"></div>
-                    <div class="w-12 h-5 bg-gray-200 rounded-md"></div>
+                    <div class="w-10 h-10 rounded-xl animate-shimmer"></div>
+                    <div class="w-12 h-5 animate-shimmer rounded-md"></div>
                 </div>
-                <div class="h-16 bg-gray-100 rounded-xl"></div>
-                <div class="h-8 bg-gray-100 rounded-lg"></div>
+                <div class="h-16 animate-shimmer rounded-xl"></div>
+                <div class="h-8 animate-shimmer rounded-lg"></div>
             </div>
         </div>
 
         <!-- ═══════ EMPTY STATE ═══════ -->
         <div
             v-else-if="!filteredWallets.length"
-            class="bg-white rounded-2xl border border-gray-100 p-8 sm:p-12 text-center shadow-xs"
+            class="bg-white rounded-2xl border border-gray-100 p-8 sm:p-14 text-center shadow-xs"
         >
-            <div class="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-400 mx-auto flex items-center justify-center mb-3">
-                <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-50 to-amber-50 text-indigo-400 mx-auto flex items-center justify-center mb-4 ring-1 ring-indigo-100">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                 </svg>
             </div>
-            <h3 class="text-sm font-semibold text-gray-800">
+            <h3 class="text-sm font-bold text-gray-800">
                 {{ searchQuery ? $t('common.noResults') : $t('common.none') }}
             </h3>
-            <p class="text-xs text-gray-400 mt-1 max-w-xs mx-auto">
+            <p class="text-xs text-gray-400 mt-1.5 max-w-sm mx-auto leading-relaxed">
                 {{ searchQuery ? '' : $t('accounts.privateIntro') }}
             </p>
             <button
                 v-if="!searchQuery && can('manage-accounts')"
-                class="mt-4 px-4 py-2 text-xs font-semibold rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 shadow-xs"
+                class="mt-5 px-5 py-2.5 text-xs font-bold rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 shadow-xs transition-colors"
                 @click="showCreate = true"
             >
                 {{ $t('accounts.newWallet') }}
@@ -219,7 +219,7 @@
             v-else
             class="bg-white rounded-2xl shadow-xs border border-gray-100 overflow-x-auto"
         >
-            <table class="min-w-full text-sm">
+            <table class="min-w-full text-sm table-enhanced">
                 <thead class="bg-gray-50 text-start text-xs uppercase tracking-wide text-gray-500 border-b border-gray-100">
                     <tr>
                         <th class="px-4 py-3">{{ $t('accounts.name') }}</th>
@@ -253,7 +253,7 @@
                                 </button>
                                 <button
                                     class="text-amber-600 hover:text-amber-800 text-xs font-semibold me-3"
-                                    @click="account.is_active ? confirmDelete(account) : toggleActive(account)"
+                                    @click="confirmDelete(account)"
                                 >
                                     {{ account.is_active ? $t('accounts.deactivate') : $t('accounts.activate') }}
                                 </button>
@@ -314,76 +314,16 @@
             </form>
         </Modal>
 
-        <Modal :open="showEdit" :title="$t('accounts.editTitle')" @close="showEdit = false">
-            <form class="space-y-4" @submit.prevent="update">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('accounts.nameRequired') }}</label>
-                    <input v-model="editForm.name" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
-                    <p v-if="errors.name" class="text-xs text-red-600 mt-1">{{ errors.name[0] }}</p>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('accounts.typeRequired') }}</label>
-                        <select v-model="editForm.account_type_id" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
-                            <option value="" disabled>{{ $t('common.select') }}</option>
-                            <option v-for="t in accountTypes" :key="t.id" :value="t.id">{{ t.name }} ({{ t.code }})</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('accounts.currencyRequired') }}</label>
-                        <select v-model="editForm.currency_id" required :disabled="editBalance !== 0"
-                            :class="editBalance !== 0 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : ''"
-                            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
-                            <option value="" disabled>{{ $t('common.select') }}</option>
-                            <option v-for="c in currencies" :key="c.id" :value="c.id">{{ c.code }}</option>
-                        </select>
-                        <p v-if="editBalance !== 0" class="text-xs text-gray-500 mt-1">{{ $t('accounts.currencyLocked') }}</p>
-                        <p v-if="errors.currency_id" class="text-xs text-red-600 mt-1">{{ errors.currency_id[0] }}</p>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('accounts.newBalance') }}</label>
-                    <MoneyInput
-                        v-model="editForm.new_balance"
-                        :max-decimals="4"
-                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                    />
-                    <p class="text-xs text-gray-500 mt-1">
-                        {{ $t('accounts.currentBalance') }}: {{ money(editBalance, editTarget?.currency?.code || '') }}
-                    </p>
-                    <p v-if="errors.new_balance" class="text-xs text-red-600 mt-1">{{ errors.new_balance[0] }}</p>
-                </div>
-                <LogoPicker v-model="editForm.logo" :name="editForm.name" :existing-url="logoUrl(editTarget)" />
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" class="px-4 py-2 text-sm rounded-lg border hover:bg-gray-50" @click="showEdit = false">{{ $t('common.cancel') }}</button>
-                    <button type="submit" :disabled="busy" class="px-4 py-2 text-sm rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 font-medium">
-                        {{ busy ? $t('common.saving') : $t('common.save') }}
-                    </button>
-                </div>
-            </form>
-        </Modal>
-
-        <Modal :open="showBalanceConfirm" :title="$t('accounts.balanceChangeTitle')" :z-index="60" @close="showBalanceConfirm = false">
-            <div class="space-y-4">
-                <p class="text-sm text-gray-600">
-                    {{ $t('accounts.balanceChangeConfirm', {
-                        name: editTarget?.name,
-                        old: money((editForm.old_balance), editTarget?.currency?.code || ''),
-                        new: money(Number(editForm.new_balance), editTarget?.currency?.code || ''),
-                    }) }}
-                </p>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button class="px-4 py-2 text-sm rounded-lg border hover:bg-gray-50" @click="showBalanceConfirm = false">{{ $t('common.cancel') }}</button>
-                    <button
-                        :disabled="busy"
-                        class="px-4 py-2 text-sm rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 font-medium"
-                        @click="doUpdate"
-                    >
-                        {{ busy ? $t('common.saving') : $t('common.save') }}
-                    </button>
-                </div>
-            </div>
-        </Modal>
+        <!-- Edit / balance-change confirm / delete modals come from the shared component -->
+        <WalletManageModals
+            :edit-account="editTarget"
+            :delete-account="showDelete ? deleteTarget : null"
+            :account-types="accountTypes"
+            :currencies="currencies"
+            @close-edit="showEdit = false; editTarget = null"
+            @close-delete="showDelete = false; deleteTarget = null"
+            @saved="accountStore.fetchAccounts().catch(() => {})"
+        />
 
         <Modal :open="showLedger" :title="`${$t('accounts.ledgerBtn')} — ${ledgerAccount?.name || ''}`" max-width="sm:max-w-3xl" @close="showLedger = false">
             <div class="flex gap-3 mb-4">
@@ -425,47 +365,6 @@
             </div>
             <Pagination :meta="ledgerMeta" @page="loadLedger" />
         </Modal>
-
-        <Modal :open="showDelete" :title="$t('accounts.deleteTitle')" :z-index="60" @close="closeDelete">
-            <div class="space-y-4">
-                <p class="text-sm text-gray-600">{{ $t('accounts.deleteConfirm', { name: deleteTarget?.name }) }}</p>
-                <p v-if="deleteTarget?.is_active" class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                    {{ $t('accounts.deleteActive') }}
-                </p>
-                <p v-if="deleteError" class="text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-                    {{ deleteError }}
-                </p>
-                <template v-if="deleteFailed">
-                    <p class="text-xs text-red-700 font-semibold">{{ $t('accounts.forceDeleteNote') }}</p>
-                    <button
-                        :disabled="busy"
-                        class="w-full px-4 py-2 text-sm rounded-lg bg-red-700 text-white hover:bg-red-800 disabled:opacity-50 font-semibold"
-                        @click="doDelete(true)"
-                    >
-                        {{ busy ? $t('common.saving') : $t('accounts.forceDelete') }}
-                    </button>
-                </template>
-                <div class="flex items-center justify-between gap-2 pt-2">
-                    <button
-                        class="px-3 py-2 text-xs font-semibold rounded-lg text-amber-700 hover:bg-amber-50 border border-amber-200"
-                        @click="toggleActive"
-                    >
-                        {{ deleteTarget?.is_active ? $t('accounts.deactivate') : $t('accounts.activate') }}
-                    </button>
-                    <div class="flex gap-2">
-                        <button class="px-4 py-2 text-sm rounded-lg border hover:bg-gray-50" @click="closeDelete">{{ $t('common.cancel') }}</button>
-                        <button
-                            v-if="!deleteFailed"
-                            :disabled="busy"
-                            class="px-4 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 font-medium"
-                            @click="doDelete(false)"
-                        >
-                            {{ $t('accounts.delete') }}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </Modal>
     </div>
 </template>
 
@@ -480,6 +379,7 @@ import Pagination from '../components/Pagination.vue'
 import LogoAvatar from '../components/LogoAvatar.vue'
 import LogoPicker from '../components/LogoPicker.vue'
 import MoneyInput from '../components/MoneyInput.vue'
+import WalletManageModals from '../components/WalletManageModals.vue'
 
 const accountStore = useAccountStore()
 const { can } = usePermissions()
@@ -496,11 +396,8 @@ const errors = ref({})
 const showCreate = ref(false)
 const showEdit = ref(false)
 const editTarget = ref(null)
-const showBalanceConfirm = ref(false)
 const showDelete = ref(false)
 const deleteTarget = ref(null)
-const deleteError = ref('')
-const deleteFailed = ref(false)
 const showLedger = ref(false)
 const ledgerAccount = ref(null)
 const ledgerEntries = ref([])
@@ -509,9 +406,6 @@ const ledgerLoading = ref(false)
 const ledgerFilters = reactive({ date_from: '', date_to: '' })
 
 const form = reactive({ name: '', account_type_id: '', currency_id: '', logo: '', opening_balance: 0 })
-const editForm = reactive({ name: '', account_type_id: '', currency_id: '', logo: '', new_balance: 0, old_balance: 0 })
-
-const editBalance = computed(() => Number(editTarget.value?.current_balance ?? 0))
 
 const SYSTEM_TYPE_CODES = ['owner_equity', 'exchange_pending']
 
@@ -570,124 +464,12 @@ async function create() {
 
 function openEdit(account) {
     editTarget.value = account
-    editForm.name = account.name
-    editForm.account_type_id = account.account_type?.id || account.account_type_id || ''
-    editForm.currency_id = account.currency?.id || account.currency_id || ''
-    editForm.logo = ''
-    editForm.old_balance = Number(account.current_balance ?? 0)
-    editForm.new_balance = editForm.old_balance
     showEdit.value = true
-}
-
-async function update() {
-    if (! editTarget.value) return
-    busy.value = true
-    errors.value = {}
-    error.value = ''
-    try {
-        const round4 = (n) => Math.round(Number(n) * 10000) / 10000
-        const balanceChanged = round4(editForm.new_balance) !== round4(editForm.old_balance)
-        if (balanceChanged) {
-            showEdit.value = false
-            showBalanceConfirm.value = true
-        } else {
-            await submitUpdate()
-            showEdit.value = false
-            await accountStore.fetchAccounts()
-        }
-    } catch (e) {
-        const parsed = apiError(e)
-        error.value = parsed.message
-        errors.value = parsed.errors
-    } finally {
-        busy.value = false
-    }
-}
-
-async function doUpdate() {
-    busy.value = true
-    errors.value = {}
-    error.value = ''
-    try {
-        await submitUpdate()
-        showBalanceConfirm.value = false
-        showEdit.value = false
-        await accountStore.fetchAccounts()
-    } catch (e) {
-        const parsed = apiError(e)
-        error.value = parsed.message
-        errors.value = parsed.errors
-        showBalanceConfirm.value = false
-    } finally {
-        busy.value = false
-    }
-}
-
-async function submitUpdate() {
-    if (! editTarget.value) return
-    const round4 = (n) => Math.round(Number(n) * 10000) / 10000
-    const balanceChanged = round4(editForm.new_balance) !== round4(editForm.old_balance)
-    await accountStore.updateAccount(editTarget.value.id, {
-        name: editForm.name,
-        account_type_id: editForm.account_type_id,
-        currency_id: editForm.currency_id,
-        logo_url: editForm.logo ? editForm.logo : undefined,
-        new_balance: balanceChanged ? round4(editForm.new_balance) : undefined,
-    })
 }
 
 function confirmDelete(account) {
     deleteTarget.value = account
-    deleteError.value = ''
-    deleteFailed.value = false
     showDelete.value = true
-}
-
-function closeDelete() {
-    showDelete.value = false
-    deleteError.value = ''
-    deleteFailed.value = false
-}
-
-async function doDelete(force = false) {
-    if (! deleteTarget.value) return
-    busy.value = true
-    error.value = ''
-    try {
-        await accountStore.deleteAccount(deleteTarget.value.id, force)
-        closeDelete()
-        deleteTarget.value = null
-        await accountStore.fetchAccounts()
-    } catch (e) {
-        deleteError.value = apiError(e).message
-        deleteFailed.value = true
-    } finally {
-        busy.value = false
-    }
-}
-
-async function toggleActive() {
-    if (! deleteTarget.value) return
-    busy.value = true
-    error.value = ''
-    try {
-        if (deleteTarget.value.is_active) {
-            await accountStore.deactivateAccount(deleteTarget.value.id)
-        } else {
-            await accountStore.activateAccount(deleteTarget.value.id)
-        }
-        showDelete.value = false
-        deleteTarget.value = null
-        await accountStore.fetchAccounts()
-    } catch (e) {
-        error.value = apiError(e).message
-    } finally {
-        busy.value = false
-    }
-}
-
-function logoUrl(account) {
-    return account?.logo_url || ''
 }
 
 function openLedger(account) {

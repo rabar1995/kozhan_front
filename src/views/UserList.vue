@@ -15,7 +15,7 @@
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
-            <table class="min-w-full text-sm">
+            <table class="min-w-full text-sm table-enhanced">
                 <thead class="bg-gray-50 text-start text-xs uppercase tracking-wide text-gray-500">
                     <tr>
                         <th class="px-4 py-3">{{ $t('common.name') }}</th>
@@ -120,9 +120,13 @@ import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { api, apiError } from '../api/client'
 import { dateTime } from '../utils/format'
+import { useConfirm } from '../composables/useConfirm'
+import { useToast } from '../composables/useToast'
 import Modal from '../components/Modal.vue'
 
 const { t } = useI18n()
+const { confirm } = useConfirm()
+const { showToast } = useToast()
 
 const users = ref([])
 const loading = ref(false)
@@ -183,9 +187,17 @@ async function save() {
 }
 
 async function deactivate(user) {
-    if (! confirm(t('users.deactivateConfirm', { name: user.name }))) return
+    const ok = await confirm({
+        title: t('users.deactivateBtn'),
+        message: t('users.deactivateConfirm', { name: user.name }),
+        type: 'warning',
+        confirmText: t('users.deactivateBtn'),
+        cancelText: t('common.cancel'),
+    })
+    if (!ok) return
     try {
         await api.patch(`/users/${user.id}/deactivate`)
+        showToast({ message: `${user.name} deactivated.`, type: 'success' })
         await load()
     } catch (e) {
         error.value = apiError(e).message

@@ -7,18 +7,6 @@
             {{ message }}
         </div>
 
-        <!-- Pending account balances -->
-        <div v-if="summary.pending_accounts.length" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div
-                v-for="a in summary.pending_accounts"
-                :key="a.id"
-                class="bg-amber-50 rounded-xl shadow-sm border border-amber-100 p-4"
-            >
-                <p class="text-xs text-amber-700 truncate">{{ a.name }}</p>
-                <p class="text-lg font-bold text-amber-900 mt-1">{{ money(a.balance, a.code) }}</p>
-            </div>
-        </div>
-
         <!-- Open deal form -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
             <h3 class="text-sm font-semibold text-gray-700 mb-4">{{ $t('deals.openTitle') }}</h3>
@@ -124,7 +112,7 @@
 
         <!-- History (one row per deal, newest first from the API) -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
-            <table class="min-w-full text-sm">
+            <table class="min-w-full text-sm table-enhanced">
                 <thead class="bg-gray-50 text-start text-xs uppercase tracking-wide text-gray-500">
                     <tr>
                         <th class="px-3 py-3 w-8"></th>

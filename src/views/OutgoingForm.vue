@@ -155,20 +155,6 @@
                         <p v-if="errors.send_currency_id" class="text-xs text-rose-600 mt-1">{{ errors.send_currency_id[0] }}</p>
                     </div>
 
-                    <!-- Exchange Rate -->
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">{{ $t('forms.exchangeRate') }}</label>
-                        <input
-                            v-model.number="form.exchange_rate"
-                            type="number"
-                            step="0.000001"
-                            min="0.000001"
-                            required
-                            class="w-full rounded-xl border border-gray-200 px-3.5 py-2 text-sm font-mono font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
-                        />
-                        <p v-if="errors.exchange_rate" class="text-xs text-rose-600 mt-1">{{ errors.exchange_rate[0] }}</p>
-                    </div>
-
                     <!-- Receive / Collect Amount -->
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1">{{ $t('outgoing.amountCollected') }}</label>
@@ -297,7 +283,6 @@ const form = reactive({
     send_currency_id: '',
     receive_amount: null,
     receive_currency_id: '',
-    exchange_rate: 1,
     commission_amount: 0,
     commission_type: 'earned',
     notes: '',

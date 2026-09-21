@@ -52,7 +52,7 @@
                 <div class="flex items-center gap-3 p-3.5 bg-indigo-50/80 rounded-xl border border-indigo-100">
                     <img src="/pwa-192x192.png" alt="App Icon" class="w-12 h-12 rounded-xl shadow-sm" />
                     <div>
-                        <h4 class="font-bold text-gray-900 text-base">Kozhan FX</h4>
+                        <h4 class="font-bold text-gray-900 text-base">Kozhan Co</h4>
                         <p class="text-xs text-indigo-700 font-medium">{{ $t('pwa.installDesc') }}</p>
                     </div>
                 </div>

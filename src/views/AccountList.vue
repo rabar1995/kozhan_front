@@ -83,35 +83,35 @@
 
         <!-- ═══════ LOADING STATE ═══════ -->
         <div v-if="accountStore.loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            <div v-for="n in 4" :key="n" class="bg-white rounded-2xl border border-gray-100 p-5 shadow-xs animate-pulse space-y-4">
+            <div v-for="n in 4" :key="n" class="bg-white rounded-2xl border border-gray-100 p-5 shadow-xs space-y-4">
                 <div class="flex items-center justify-between">
-                    <div class="w-10 h-10 rounded-xl bg-gray-200"></div>
-                    <div class="w-12 h-5 bg-gray-200 rounded-md"></div>
+                    <div class="w-10 h-10 rounded-xl animate-shimmer"></div>
+                    <div class="w-12 h-5 animate-shimmer rounded-md"></div>
                 </div>
-                <div class="h-16 bg-gray-100 rounded-xl"></div>
-                <div class="h-8 bg-gray-100 rounded-lg"></div>
+                <div class="h-16 animate-shimmer rounded-xl"></div>
+                <div class="h-8 animate-shimmer rounded-lg"></div>
             </div>
         </div>
 
         <!-- ═══════ EMPTY STATE ═══════ -->
         <div
             v-else-if="!filteredWallets.length"
-            class="bg-white rounded-2xl border border-gray-100 p-8 sm:p-12 text-center shadow-xs"
+            class="bg-white rounded-2xl border border-gray-100 p-8 sm:p-14 text-center shadow-xs"
         >
-            <div class="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-400 mx-auto flex items-center justify-center mb-3">
-                <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-50 to-purple-50 text-indigo-400 mx-auto flex items-center justify-center mb-4 ring-1 ring-indigo-100">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 110-6h.75A2.25 2.25 0 0018 1.5H6A2.25 2.25 0 003.75 3.75v16.5A2.25 2.25 0 006 22.5h12a2.25 2.25 0 002.25-2.25V12zM15 12a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
                 </svg>
             </div>
-            <h3 class="text-sm font-semibold text-gray-800">
+            <h3 class="text-sm font-bold text-gray-800">
                 {{ searchQuery ? $t('common.noResults') : $t('common.none') }}
             </h3>
-            <p class="text-xs text-gray-400 mt-1 max-w-xs mx-auto">
+            <p class="text-xs text-gray-400 mt-1.5 max-w-sm mx-auto leading-relaxed">
                 {{ searchQuery ? '' : $t('accounts.sharedIntro') }}
             </p>
             <button
                 v-if="!searchQuery && can('manage-accounts')"
-                class="mt-4 px-4 py-2 text-xs font-semibold rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 shadow-xs"
+                class="mt-5 px-5 py-2.5 text-xs font-bold rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 shadow-xs transition-colors"
                 @click="showCreate = true"
             >
                 {{ $t('accounts.newSafe') }}
@@ -181,6 +181,28 @@
                         </svg>
                         <span>{{ $t('accounts.ledgerBtn') }}</span>
                     </button>
+
+                    <button
+                        v-if="can('manage-accounts')"
+                        class="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors shrink-0"
+                        :title="$t('common.edit')"
+                        @click="editAccount = account"
+                    >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                        </svg>
+                    </button>
+
+                    <button
+                        v-if="can('manage-accounts')"
+                        class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0"
+                        :title="$t('accounts.delete')"
+                        @click="deleteAccountTarget = account"
+                    >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                        </svg>
+                    </button>
                 </div>
             </div>
         </div>
@@ -190,7 +212,7 @@
             v-else
             class="bg-white rounded-2xl shadow-xs border border-gray-100 overflow-x-auto"
         >
-            <table class="min-w-full text-sm">
+            <table class="min-w-full text-sm table-enhanced">
                 <thead class="bg-gray-50 text-start text-xs uppercase tracking-wide text-gray-500 border-b border-gray-100">
                     <tr>
                         <th class="px-4 py-3">{{ $t('accounts.name') }}</th>
@@ -211,12 +233,23 @@
                         >
                             {{ money(account.current_balance, account.currency?.code) }}
                         </td>
-                        <td class="px-4 py-3 text-end">
-                            <button
-                                class="text-indigo-600 hover:text-indigo-800 text-xs font-semibold"
-                                @click="openLedger(account)"
-                            >
+                        <td class="px-4 py-3 text-end whitespace-nowrap">
+                            <button class="text-indigo-600 hover:text-indigo-800 text-xs font-semibold me-3" @click="openLedger(account)">
                                 {{ $t('accounts.ledgerBtn') }}
+                            </button>
+                            <button
+                                v-if="can('manage-accounts')"
+                                class="text-indigo-600 hover:text-indigo-800 text-xs font-semibold me-3"
+                                @click="editAccount = account"
+                            >
+                                {{ $t('common.edit') }}
+                            </button>
+                            <button
+                                v-if="can('manage-accounts')"
+                                class="text-red-600 hover:text-red-800 text-xs font-semibold"
+                                @click="deleteAccountTarget = account"
+                            >
+                                {{ $t('accounts.delete') }}
                             </button>
                         </td>
                     </tr>
@@ -308,6 +341,17 @@
                 </div>
             </form>
         </Modal>
+
+        <!-- Edit / balance-change confirm / delete modals come from the shared component -->
+        <WalletManageModals
+            :edit-account="editAccount"
+            :delete-account="deleteAccountTarget"
+            :account-types="accountTypes"
+            :currencies="currencies"
+            @close-edit="editAccount = null"
+            @close-delete="deleteAccountTarget = null"
+            @saved="accountStore.fetchAccounts().catch(() => {})"
+        />
     </div>
 </template>
 
@@ -320,6 +364,7 @@ import { money, dateTime } from '../utils/format'
 import Modal from '../components/Modal.vue'
 import Pagination from '../components/Pagination.vue'
 import LogoPicker from '../components/LogoPicker.vue'
+import WalletManageModals from '../components/WalletManageModals.vue'
 import MoneyInput from '../components/MoneyInput.vue'
 
 const accountStore = useAccountStore()
@@ -335,6 +380,8 @@ const busy = ref(false)
 const errors = ref({})
 
 const showCreate = ref(false)
+const editAccount = ref(null)
+const deleteAccountTarget = ref(null)
 const emptyForm = { name: '', account_type_id: '', currency_id: '', opening_balance: '', logo: '' }
 const form = reactive({ ...emptyForm })
 

@@ -5,7 +5,7 @@
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
-            <table class="min-w-full text-sm">
+            <table class="min-w-full text-sm table-enhanced">
                 <thead class="bg-gray-50 text-start text-xs uppercase tracking-wide text-gray-500">
                     <tr>
                         <th class="px-4 py-3">{{ $t('audit.date') }}</th>

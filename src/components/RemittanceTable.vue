@@ -55,13 +55,13 @@
 
         <!-- ═══════ SKELETON LOADING ═══════ -->
         <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            <div v-for="n in 6" :key="n" class="bg-white rounded-2xl border border-gray-100 p-5 shadow-xs animate-pulse space-y-3">
+            <div v-for="n in 6" :key="n" class="bg-white rounded-2xl border border-gray-100 p-5 shadow-xs space-y-3">
                 <div class="flex items-center justify-between">
-                    <div class="h-5 bg-gray-200 rounded w-1/3"></div>
-                    <div class="h-5 bg-gray-200 rounded w-1/4"></div>
+                    <div class="h-5 animate-shimmer rounded w-1/3"></div>
+                    <div class="h-5 animate-shimmer rounded w-1/4"></div>
                 </div>
-                <div class="h-16 bg-gray-50 rounded-xl"></div>
-                <div class="h-14 bg-gray-100 rounded-xl"></div>
+                <div class="h-16 animate-shimmer rounded-xl"></div>
+                <div class="h-14 animate-shimmer rounded-xl"></div>
             </div>
         </div>
 
@@ -212,7 +212,7 @@
             v-else
             class="bg-white rounded-2xl shadow-xs border border-gray-100 overflow-x-auto"
         >
-            <table class="min-w-full text-sm">
+            <table class="min-w-full text-sm table-enhanced">
                 <thead class="bg-gray-50 text-start text-xs uppercase tracking-wide text-gray-500 border-b border-gray-100">
                     <tr>
                         <th class="px-4 py-3">{{ $t('remittances.number') }}</th>
@@ -324,7 +324,6 @@
                     <p class="flex items-center justify-between"><span class="text-gray-500">{{ $t('remittances.dDirection') }}</span> <StatusBadge :value="detail.direction" /></p>
                     <p class="flex items-center justify-between"><span class="text-gray-500">{{ $t('remittances.dStatus') }}</span> <StatusBadge :value="detail.status" /></p>
                     <p class="flex items-center justify-between"><span class="text-gray-500">{{ $t('remittances.dAgent') }}</span> <span class="font-semibold text-gray-900">{{ detail.agent?.name }}</span></p>
-                    <p class="flex items-center justify-between"><span class="text-gray-500">{{ $t('remittances.dRate') }}</span> <span class="font-mono font-bold">{{ detail.exchange_rate }}</span></p>
                     <p class="flex items-center justify-between"><span class="text-gray-500">{{ $t('remittances.dSender') }}</span> <span class="font-semibold text-gray-900">{{ detail.sender_name }} {{ detail.sender_phone ? `(${detail.sender_phone})` : '' }}</span></p>
                     <p class="flex items-center justify-between"><span class="text-gray-500">{{ $t('remittances.dReceiver') }}</span> <span class="font-semibold text-gray-900">{{ detail.receiver_name }} {{ detail.receiver_phone ? `(${detail.receiver_phone})` : '' }}</span></p>
                     <p class="flex items-center justify-between"><span class="text-gray-500">{{ $t('remittances.dSend') }}</span> <span class="font-bold text-gray-900">{{ money(detail.send_amount, detail.send_currency?.code) }}</span></p>

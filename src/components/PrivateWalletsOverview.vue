@@ -112,9 +112,12 @@ import LogoAvatar from './LogoAvatar.vue'
 const accountStore = useAccountStore()
 const loading = ref(false)
 
+const SYSTEM_TYPE_CODES = ['owner_equity', 'exchange_pending']
+
 const wallets = computed(() =>
     accountStore.accounts
         .filter((a) => a.visibility === 'owner_private')
+        .filter((a) => ! SYSTEM_TYPE_CODES.includes(a.account_type?.code || ''))
         .sort((a, b) => Number(b.current_balance || 0) - Number(a.current_balance || 0)),
 )
 
