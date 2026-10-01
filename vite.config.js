@@ -8,7 +8,8 @@ export default defineConfig({
         vue(),
         tailwindcss(),
         VitePWA({
-            registerType: 'autoUpdate',
+            // 'prompt': the app shows "New version available — Reload" (PwaPrompt.vue)
+            registerType: 'prompt',
             injectRegister: 'auto',
             includeAssets: [
                 'favicon.png',
@@ -52,20 +53,6 @@ export default defineConfig({
                 globPatterns: ['**/*.{js,css,html,ico,png,svg,json,woff2}'],
                 runtimeCaching: [
                     {
-                        urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-                        handler: 'CacheFirst',
-                        options: {
-                            cacheName: 'google-fonts-cache',
-                            expiration: {
-                                maxEntries: 10,
-                                maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
-                            },
-                            cacheableResponse: {
-                                statuses: [0, 200],
-                            },
-                        },
-                    },
-                    {
                         urlPattern: /\/api\/currencies/i,
                         handler: 'StaleWhileRevalidate',
                         options: {
@@ -80,11 +67,13 @@ export default defineConfig({
                         },
                     },
                     {
-                        urlPattern: /\/api\/(dashboard|exchange-rates|accounts|agents)/i,
+                        // Network first; cached data is only used when the network is down/very slow,
+                        // so balances are not shown stale on a normal connection.
+                        urlPattern: /\/api\/(dashboard|accounts|agents)/i,
                         handler: 'NetworkFirst',
                         options: {
                             cacheName: 'api-dynamic-cache',
-                            networkTimeoutSeconds: 3,
+                            networkTimeoutSeconds: 10,
                             expiration: {
                                 maxEntries: 50,
                                 maxAgeSeconds: 60 * 60 * 12, // 12 hours

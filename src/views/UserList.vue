@@ -1,114 +1,80 @@
 <template>
     <div>
-        <div v-if="error" class="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 mb-4">
-            {{ error }}
-        </div>
-
-        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
-            <p class="text-sm text-gray-500">{{ $t('users.intro') }}</p>
-            <button
-                class="px-4 py-2 text-sm rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700"
-                @click="openCreate"
-            >
+        <PageHeader :text="$t('users.intro')">
+            <button class="btn btn-primary" @click="openCreate">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                 {{ $t('users.newUser') }}
             </button>
-        </div>
+        </PageHeader>
 
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
-            <table class="min-w-full text-sm table-enhanced">
-                <thead class="bg-gray-50 text-start text-xs uppercase tracking-wide text-gray-500">
-                    <tr>
-                        <th class="px-4 py-3">{{ $t('common.name') }}</th>
-                        <th class="px-4 py-3">{{ $t('users.username') }}</th>
-                        <th class="px-4 py-3">{{ $t('users.phone') }}</th>
-                        <th class="px-4 py-3">{{ $t('users.role') }}</th>
-                        <th class="px-4 py-3">{{ $t('common.status') }}</th>
-                        <th class="px-4 py-3">{{ $t('users.lastLogin') }}</th>
-                        <th class="px-4 py-3 text-end">{{ $t('common.actions') }}</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100">
-                    <tr v-if="loading">
-                        <td colspan="7" class="px-4 py-8 text-center text-gray-400">{{ $t('common.loading') }}</td>
-                    </tr>
-                    <tr v-else-if="!users.length">
-                        <td colspan="7" class="px-4 py-8 text-center text-gray-400">{{ $t('users.noUsers') }}</td>
-                    </tr>
-                    <tr v-for="user in users" :key="user.id" class="hover:bg-gray-50">
-                        <td class="px-4 py-3 font-medium text-gray-900">{{ user.name }}</td>
-                        <td class="px-4 py-3 text-gray-600">{{ user.username }}</td>
-                        <td class="px-4 py-3 text-gray-600">{{ user.phone || '-' }}</td>
-                        <td class="px-4 py-3">
-                            <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium"
-                                :class="user.role === 'owner' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'">
-                                {{ $t(`users.roles.${user.role}`, user.role) }}
-                            </span>
-                        </td>
-                        <td class="px-4 py-3">
-                            <span class="text-xs font-medium" :class="user.is_active ? 'text-emerald-600' : 'text-red-600'">
-                                {{ user.is_active ? $t('users.active') : $t('users.deactivated') }}
-                            </span>
-                        </td>
-                        <td class="px-4 py-3 text-gray-500 text-xs">{{ dateTime(user.last_login_at) }}</td>
-                        <td class="px-4 py-3 text-end whitespace-nowrap">
-                            <button class="text-indigo-600 hover:text-indigo-800 text-xs font-medium me-3" @click="openEdit(user)">
-                                {{ $t('common.edit') }}
-                            </button>
-                            <button
-                                v-if="user.is_active"
-                                class="text-red-600 hover:text-red-800 text-xs font-medium"
-                                @click="deactivate(user)"
-                            >
-                                {{ $t('users.deactivateBtn') }}
-                            </button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+        <Alert v-if="error" type="error" dismissible class="mb-4" @dismiss="error = ''">{{ error }}</Alert>
+
+        <div v-if="loading && !users.length" class="space-y-3">
+            <div v-for="i in 3" :key="i" class="h-16 rounded-2xl animate-shimmer" />
         </div>
+        <EmptyState v-else-if="!users.length" :title="$t('users.noUsers')" />
+        <ul v-else class="card divide-y divide-gray-100">
+            <li v-for="user in users" :key="user.id" class="flex items-center gap-3 px-4 py-3" :class="!user.is_active ? 'opacity-60' : ''">
+                <div class="flex items-center justify-center w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 font-bold shrink-0">
+                    {{ (user.name || '?').charAt(0).toUpperCase() }}
+                </div>
+                <div class="min-w-0 flex-1">
+                    <p class="text-sm font-semibold text-gray-900 truncate">
+                        {{ user.name }}
+                        <span class="ms-1 px-2 py-0.5 rounded-full text-xs font-medium" :class="user.role === 'owner' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'">
+                            {{ $t(`users.roles.${user.role}`) }}
+                        </span>
+                        <span v-if="!user.is_active" class="ms-1 text-xs font-medium text-red-600">{{ $t('users.deactivated') }}</span>
+                    </p>
+                    <p class="text-xs text-gray-500 truncate">{{ user.phone || '—' }} · {{ user.username }}</p>
+                    <p class="text-xs text-gray-400">{{ $t('users.lastLogin') }}: {{ user.last_login_at ? dateTime(user.last_login_at) : $t('users.never') }}</p>
+                </div>
+                <div class="flex gap-1 shrink-0">
+                    <button class="btn btn-ghost btn-sm" @click="openEdit(user)">{{ $t('common.edit') }}</button>
+                    <button v-if="user.is_active && user.id !== auth.user?.id" class="btn btn-ghost btn-sm !text-red-600" @click="deactivate(user)">{{ $t('users.deactivateBtn') }}</button>
+                </div>
+            </li>
+        </ul>
 
         <Modal :open="showForm" :title="editing ? $t('users.editUserTitle') : $t('users.newUserTitle')" @close="showForm = false">
-            <form class="space-y-4" @submit.prevent="save">
+            <form class="space-y-4" novalidate @submit.prevent="save">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('users.nameRequired') }}</label>
-                    <input v-model="form.name" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
-                    <p v-if="errors.name" class="text-xs text-red-600 mt-1">{{ errors.name[0] }}</p>
+                    <label class="form-label" for="u-name">{{ $t('common.name') }} <span class="text-red-500">*</span></label>
+                    <input id="u-name" v-model="form.name" class="form-input" />
+                    <p v-if="errors.name" class="form-error">{{ errors.name[0] }}</p>
+                </div>
+                <div>
+                    <label class="form-label" for="u-phone">{{ $t('users.phone') }} <span class="text-red-500">*</span></label>
+                    <input id="u-phone" v-model="form.phone" type="tel" inputmode="tel" class="form-input" :placeholder="$t('users.phonePlaceholder')" />
+                    <p class="form-hint">{{ $t('users.phoneLoginNote') }}</p>
+                    <p v-if="errors.phone" class="form-error">{{ errors.phone[0] }}</p>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('users.usernameRequired') }}</label>
-                        <input v-model="form.username" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
-                        <p v-if="errors.username" class="text-xs text-red-600 mt-1">{{ errors.username[0] }}</p>
+                        <label class="form-label" for="u-username">{{ $t('users.username') }} <span class="text-red-500">*</span></label>
+                        <input id="u-username" v-model="form.username" autocapitalize="off" autocomplete="off" class="form-input" />
+                        <p v-if="errors.username" class="form-error">{{ errors.username[0] }}</p>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('users.roleRequired') }}</label>
-                        <select v-model="form.role" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                        <label class="form-label" for="u-role">{{ $t('users.role') }}</label>
+                        <select id="u-role" v-model="form.role" class="form-input">
                             <option value="office_manager">{{ $t('users.officeManagerOption') }}</option>
                             <option value="owner">{{ $t('users.ownerOption') }}</option>
                         </select>
                     </div>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('users.phoneRequired') }}</label>
-                    <input v-model="form.phone" type="tel" required
-                        :placeholder="$t('users.phonePlaceholder')"
-                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
-                    <p v-if="errors.phone" class="text-xs text-red-600 mt-1">{{ errors.phone[0] }}</p>
-                    <p class="text-xs text-gray-400 mt-1">{{ $t('users.phoneLoginNote') }}</p>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                        {{ editing ? $t('users.passwordKeep') : $t('users.passwordRequired') }}
+                    <label class="form-label" for="u-pass">
+                        {{ $t('auth.password') }} <span v-if="!editing" class="text-red-500">*</span>
                     </label>
-                    <input v-model="form.password" type="password" :required="!editing" autocomplete="new-password"
-                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
-                    <p v-if="errors.password" class="text-xs text-red-600 mt-1">{{ errors.password[0] }}</p>
+                    <input id="u-pass" v-model="form.password" type="password" autocomplete="new-password" class="form-input" />
+                    <p class="form-hint">{{ editing ? $t('users.passwordKeepHint') : $t('users.passwordHint') }}</p>
+                    <p v-if="errors.password" class="form-error">{{ errors.password[0] }}</p>
                 </div>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" class="px-4 py-2 text-sm rounded-lg border hover:bg-gray-50" @click="showForm = false">{{ $t('common.cancel') }}</button>
-                    <button type="submit" :disabled="busy" class="px-4 py-2 text-sm rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50">
-                        {{ busy ? $t('common.saving') : $t('common.save') }}
-                    </button>
+                <Alert v-if="formError" type="error">{{ formError }}</Alert>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" @click="showForm = false">{{ $t('common.cancel') }}</button>
+                    <button type="submit" :disabled="busy" class="btn btn-primary">{{ busy ? $t('common.saving') : $t('common.save') }}</button>
                 </div>
             </form>
         </Modal>
@@ -119,24 +85,31 @@
 import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { api, apiError } from '../api/client'
+import { useAuthStore } from '../stores/auth'
 import { dateTime } from '../utils/format'
 import { useConfirm } from '../composables/useConfirm'
 import { useToast } from '../composables/useToast'
 import Modal from '../components/Modal.vue'
+import Alert from '../components/ui/Alert.vue'
+import EmptyState from '../components/ui/EmptyState.vue'
+import PageHeader from '../components/ui/PageHeader.vue'
 
 const { t } = useI18n()
+const auth = useAuthStore()
 const { confirm } = useConfirm()
 const { showToast } = useToast()
 
 const users = ref([])
 const loading = ref(false)
 const error = ref('')
+const formError = ref('')
 const busy = ref(false)
 const errors = ref({})
 
 const showForm = ref(false)
 const editing = ref(null)
-const form = ref({ name: '', username: '', phone: '', password: '', role: 'office_manager' })
+const blank = () => ({ name: '', username: '', phone: '', password: '', role: 'office_manager' })
+const form = ref(blank())
 
 async function load() {
     loading.value = true
@@ -151,8 +124,9 @@ async function load() {
 
 function openCreate() {
     editing.value = null
-    form.value = { name: '', username: '', phone: '', password: '', role: 'office_manager' }
+    form.value = blank()
     errors.value = {}
+    formError.value = ''
     showForm.value = true
 }
 
@@ -160,13 +134,22 @@ function openEdit(user) {
     editing.value = user
     form.value = { name: user.name, username: user.username, phone: user.phone || '', password: '', role: user.role }
     errors.value = {}
+    formError.value = ''
     showForm.value = true
 }
 
 async function save() {
+    const req = [t('forms.required')]
+    const e = {}
+    if (! form.value.name.trim()) e.name = req
+    if (! form.value.phone.trim()) e.phone = req
+    if (! form.value.username.trim()) e.username = req
+    if (! editing.value && form.value.password.length < 6) e.password = [t('users.passwordHint')]
+    errors.value = e
+    formError.value = ''
+    if (Object.keys(e).length) return
+
     busy.value = true
-    errors.value = {}
-    error.value = ''
     try {
         if (editing.value) {
             const payload = { ...form.value }
@@ -175,11 +158,12 @@ async function save() {
         } else {
             await api.post('/users', { ...form.value })
         }
+        showToast({ message: t('users.savedToast', { name: form.value.name }) })
         showForm.value = false
         await load()
-    } catch (e) {
-        const parsed = apiError(e)
-        error.value = parsed.message
+    } catch (err) {
+        const parsed = apiError(err)
+        formError.value = parsed.message
         errors.value = parsed.errors
     } finally {
         busy.value = false
@@ -194,15 +178,15 @@ async function deactivate(user) {
         confirmText: t('users.deactivateBtn'),
         cancelText: t('common.cancel'),
     })
-    if (!ok) return
+    if (! ok) return
     try {
         await api.patch(`/users/${user.id}/deactivate`)
-        showToast({ message: `${user.name} deactivated.`, type: 'success' })
+        showToast({ message: t('users.deactivatedToast', { name: user.name }) })
         await load()
     } catch (e) {
         error.value = apiError(e).message
     }
 }
 
-onMounted(() => load())
+onMounted(load)
 </script>

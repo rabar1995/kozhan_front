@@ -33,12 +33,12 @@
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                     </svg>
-                    Private
+                    {{ $t('accounts.privateBadge') }}
                 </span>
             </div>
 
             <!-- Loading skeleton -->
-            <div v-if="loading" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+            <div v-if="loading && !wallets.length" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
                 <div v-for="i in 3" :key="i" class="rounded-xl border border-gray-100 p-4 space-y-3">
                     <div class="flex items-center gap-3">
                         <div class="w-9 h-9 rounded-full bg-gray-100 animate-pulse" />
@@ -87,7 +87,7 @@
                 </router-link>
             </div>
 
-            <p v-else class="text-sm text-gray-400 text-center py-6">{{ $t('common.none') }}</p>
+            <p v-else class="text-sm text-gray-400 text-center py-6">{{ $t('dashboard.noPrivateWallets') }}</p>
 
             <router-link
                 v-if="wallets.length"
@@ -112,12 +112,12 @@ import LogoAvatar from './LogoAvatar.vue'
 const accountStore = useAccountStore()
 const loading = ref(false)
 
-const SYSTEM_TYPE_CODES = ['owner_equity', 'exchange_pending']
+const WALLET_TYPES = ['cash_safe', 'e_wallet', 'bank_account', 'crypto_wallet', 'crypto_platform']
 
 const wallets = computed(() =>
     accountStore.accounts
         .filter((a) => a.visibility === 'owner_private')
-        .filter((a) => ! SYSTEM_TYPE_CODES.includes(a.account_type?.code || ''))
+        .filter((a) => WALLET_TYPES.includes(a.account_type?.code || ''))
         .sort((a, b) => Number(b.current_balance || 0) - Number(a.current_balance || 0)),
 )
 

@@ -11,14 +11,18 @@
                     :class="[maxWidth, 'max-h-[92vh] sm:max-h-[85vh]']"
                     role="dialog"
                     aria-modal="true"
+                    :aria-label="title"
+                    tabindex="-1"
+                    style="outline: none"
                     @keydown.esc="$emit('close')"
                     @keydown.tab="trapFocus"
                 >
                     <div class="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-gray-100 sticky top-0 bg-white rounded-t-2xl sm:rounded-t-xl z-10">
                         <h3 class="text-base sm:text-lg font-semibold text-gray-900 truncate pe-4">{{ title }}</h3>
                         <button
-                            class="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors shrink-0"
-                            aria-label="Close"
+                            type="button"
+                            class="btn-icon -me-2 shrink-0"
+                            :aria-label="$t('common.close')"
                             @click="$emit('close')"
                         >
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -26,7 +30,7 @@
                             </svg>
                         </button>
                     </div>
-                    <div class="px-5 sm:px-6 py-4 overflow-y-auto" style="max-height: calc(92vh - 65px);">
+                    <div class="px-5 sm:px-6 py-4 overflow-y-auto" style="max-height: calc(92vh - 65px); padding-bottom: max(1rem, env(safe-area-inset-bottom));">
                         <slot />
                     </div>
                 </div>
@@ -54,12 +58,9 @@ watch(() => props.open, (isOpen) => {
     if (isOpen) {
         document.body.style.overflow = 'hidden'
         // Focus the dialog after it mounts
-        nextTick(() => {
-            const firstFocusable = dialogRef.value?.querySelector(
-                'button, [href], input:not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"])'
-            )
-            firstFocusable?.focus()
-        })
+        // Focus the dialog itself: keeps keyboard/screen-reader users inside
+        // without showing a ring on the close button or popping the phone keyboard.
+        nextTick(() => dialogRef.value?.focus())
     } else {
         document.body.style.overflow = ''
     }

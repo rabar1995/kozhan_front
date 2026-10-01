@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { useToast } from '../composables/useToast'
+import i18n from '../i18n'
 
 const routes = [
     {
@@ -14,7 +16,7 @@ const routes = [
         component: () => import('../layouts/AppLayout.vue'),
         children: [
             { path: '', redirect: '/dashboard' },
-            { path: 'dashboard', name: 'dashboard', component: () => import('../views/Dashboard.vue'), meta: { title: 'nav.dashboard' } },
+            { path: 'dashboard', name: 'dashboard', component: () => import('../views/Dashboard.vue'), meta: { title: 'nav.home' } },
             { path: 'remittances', name: 'remittances', component: () => import('../views/RemittanceList.vue'), meta: { title: 'nav.remittances' } },
             { path: 'remittances/pending', name: 'remittances-pending', component: () => import('../views/PendingList.vue'), meta: { title: 'nav.pendingPayouts' } },
             { path: 'remittances/incoming', name: 'remittances-incoming', component: () => import('../views/IncomingForm.vue'), meta: { title: 'nav.bookIncoming' } },
@@ -55,6 +57,8 @@ router.beforeEach(async (to) => {
     }
 
     if (to.meta.role && auth.user?.role !== to.meta.role) {
+        // Tell the user why they were sent back instead of silently redirecting.
+        useToast().showToast({ message: i18n.global.t('errors.noAccess'), type: 'warning' })
         return '/dashboard'
     }
 

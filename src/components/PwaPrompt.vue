@@ -1,20 +1,35 @@
 <template>
     <div>
-        <!-- Offline Warning Bar -->
-        <Transition name="slide-down">
-            <div v-if="isOffline" class="fixed top-0 inset-x-0 z-50 bg-amber-500 text-slate-900 px-4 py-2 text-xs font-semibold flex items-center justify-between shadow-md">
-                <div class="flex items-center gap-2">
-                    <svg class="w-4 h-4 animate-pulse" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-                    </svg>
-                    <span>{{ $t('pwa.offline') }}</span>
-                </div>
+        <!-- Offline notice: a pill above the bottom bar, never covering the header -->
+        <Transition name="slide-up">
+            <div
+                v-if="isOffline"
+                class="fixed bottom-20 lg:bottom-4 start-1/2 -translate-x-1/2 rtl:translate-x-1/2 z-50 bg-amber-500 text-slate-900 px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-2 shadow-lg"
+                role="status"
+            >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                </svg>
+                <span>{{ $t('pwa.offline') }}</span>
+            </div>
+        </Transition>
+
+        <!-- New version available -->
+        <Transition name="slide-up">
+            <div
+                v-if="needRefresh"
+                class="fixed bottom-20 lg:bottom-4 inset-x-3 sm:inset-x-auto sm:end-4 z-50 sm:max-w-sm bg-slate-900 text-white rounded-2xl shadow-2xl p-4 flex items-center gap-3"
+                role="status"
+            >
+                <p class="text-sm flex-1">{{ $t('pwa.updateReady') }}</p>
+                <button class="btn btn-sm btn-ghost !text-slate-300" @click="dismissUpdate">{{ $t('pwa.later') }}</button>
+                <button class="btn btn-sm btn-primary" @click="reload">{{ $t('pwa.reload') }}</button>
             </div>
         </Transition>
 
         <!-- Install PWA Floating Banner (if installable and not in standalone) -->
         <Transition name="slide-up">
-            <div v-if="isInstallable && !isInstalled && showFloatingBanner" class="fixed bottom-4 end-4 z-50 max-w-sm bg-slate-900/95 text-white rounded-2xl shadow-2xl p-4 border border-slate-700 flex items-start gap-3.5 backdrop-blur-lg">
+            <div v-if="isInstallable && !isInstalled && showFloatingBanner && !needRefresh" class="fixed bottom-20 lg:bottom-4 inset-x-3 sm:inset-x-auto sm:end-4 z-50 sm:max-w-sm bg-slate-900/95 text-white rounded-2xl shadow-2xl p-4 border border-slate-700 flex items-start gap-3.5 backdrop-blur-lg">
                 <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-indigo-600 shrink-0 text-white shadow-md">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
@@ -32,13 +47,13 @@
                         </button>
                         <button
                             class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white text-xs transition-colors"
-                            @click="showFloatingBanner = false"
+                            @click="dismissInstall"
                         >
                             {{ $t('pwa.dismiss') }}
                         </button>
                     </div>
                 </div>
-                <button class="text-slate-400 hover:text-white -me-1 -mt-1 p-1" @click="showFloatingBanner = false">
+                <button class="text-slate-400 hover:text-white -me-1 -mt-1 p-1" :aria-label="$t('common.close')" @click="dismissInstall">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -50,7 +65,7 @@
         <Modal :open="showGuideModal" :title="$t('pwa.installApp')" @close="showGuideModal = false">
             <div class="space-y-4 text-sm text-gray-600">
                 <div class="flex items-center gap-3 p-3.5 bg-indigo-50/80 rounded-xl border border-indigo-100">
-                    <img src="/pwa-192x192.png" alt="App Icon" class="w-12 h-12 rounded-xl shadow-sm" />
+                    <img src="/pwa-192x192.png" alt="" class="w-12 h-12 rounded-xl shadow-sm" />
                     <div>
                         <h4 class="font-bold text-gray-900 text-base">Kozhan Co</h4>
                         <p class="text-xs text-indigo-700 font-medium">{{ $t('pwa.installDesc') }}</p>
@@ -66,7 +81,7 @@
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" />
                             </svg>
-                            <span>Google Chrome / Microsoft Edge:</span>
+                            <span>{{ $t('pwa.guideChrome') }}</span>
                         </p>
                         <p class="text-gray-600 leading-relaxed">{{ $t('pwa.guideStep1') }}</p>
                     </div>
@@ -77,7 +92,7 @@
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
                             </svg>
-                            <span>iPhone / iPad (Safari):</span>
+                            <span>{{ $t('pwa.guideSafari') }}</span>
                         </p>
                         <p class="text-gray-600 leading-relaxed">{{ $t('pwa.guideStep2') }}</p>
                     </div>
@@ -88,7 +103,7 @@
                         class="px-4 py-2 text-xs font-semibold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-sm"
                         @click="showGuideModal = false"
                     >
-                        {{ $t('common.cancel') }}
+                        {{ $t('common.close') }}
                     </button>
                 </div>
             </div>
@@ -99,10 +114,20 @@
 <script setup>
 import { ref } from 'vue'
 import { usePwa } from '../composables/usePwa'
+import { usePwaUpdate } from '../composables/usePwaUpdate'
 import Modal from './Modal.vue'
 
 const { isOffline, isInstallable, isInstalled, showGuideModal, promptInstall } = usePwa()
-const showFloatingBanner = ref(true)
+const { needRefresh, reload, dismiss: dismissUpdate } = usePwaUpdate()
+
+// Remember "Not now" so the banner doesn't come back on every page load.
+const DISMISS_KEY = 'kozhan_install_dismissed'
+const showFloatingBanner = ref(localStorage.getItem(DISMISS_KEY) !== '1')
+
+function dismissInstall() {
+    showFloatingBanner.value = false
+    localStorage.setItem(DISMISS_KEY, '1')
+}
 </script>
 
 <style scoped>

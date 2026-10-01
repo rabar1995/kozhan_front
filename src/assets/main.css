@@ -1,10 +1,97 @@
 @import "tailwindcss";
+@import "@fontsource-variable/vazirmatn/index.css";
 
 /* ───── Enable class-based dark mode for Tailwind v4 ───── */
 @custom-variant dark (&:where(.dark, .dark *));
 
-[dir="rtl"] {
-    font-family: "Segoe UI", Tahoma, "Noto Naskh Arabic", "Arabic Typesetting", "Noto Sans Arabic", sans-serif;
+/* ───── Brand tokens ───── */
+@theme {
+    --font-sans: ui-sans-serif, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-kurdish: "Vazirmatn Variable", "Noto Sans Arabic", Tahoma, sans-serif;
+}
+
+[dir="rtl"],
+[dir="rtl"] body {
+    font-family: var(--font-kurdish);
+}
+
+/* ─────────────────────────────────────────────────────────
+   UI BUILDING BLOCKS
+   One place for buttons, inputs and cards so every screen
+   looks and behaves the same (light + dark).
+   ───────────────────────────────────────────────────────── */
+@layer components {
+    /* Buttons — 44px tall on touch screens, 40px on desktop */
+    .btn {
+        @apply inline-flex items-center justify-center gap-2 min-h-11 sm:min-h-10 px-4 rounded-xl text-sm font-semibold
+               transition-colors select-none whitespace-nowrap
+               disabled:opacity-50 disabled:cursor-not-allowed;
+    }
+    .btn-sm {
+        @apply min-h-9 px-3 text-xs rounded-lg;
+    }
+    .btn-block {
+        @apply w-full;
+    }
+    .btn-primary {
+        @apply bg-indigo-600 text-white hover:bg-indigo-700 shadow-xs;
+    }
+    .btn-success {
+        @apply bg-emerald-600 text-white hover:bg-emerald-700 shadow-xs;
+    }
+    .btn-danger {
+        @apply bg-red-600 text-white hover:bg-red-700 shadow-xs;
+    }
+    .btn-secondary {
+        @apply bg-white text-gray-700 border border-gray-200 hover:bg-gray-50
+               dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700 dark:hover:bg-slate-700;
+    }
+    .btn-ghost {
+        @apply text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800;
+    }
+    .btn-soft-danger {
+        @apply bg-red-50 text-red-700 hover:bg-red-100 dark:bg-red-950/40 dark:text-red-300 dark:hover:bg-red-900/40;
+    }
+    /* Square icon button with a 44px touch target */
+    .btn-icon {
+        @apply inline-flex items-center justify-center w-11 h-11 sm:w-9 sm:h-9 rounded-xl
+               text-gray-500 hover:text-gray-800 hover:bg-gray-100
+               dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 transition-colors;
+    }
+
+    /* Form fields */
+    .form-label {
+        @apply block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5;
+    }
+    .form-input {
+        @apply block w-full min-h-11 sm:min-h-10 rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900
+               placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500
+               disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed
+               dark:bg-slate-900 dark:border-slate-600 dark:text-slate-100;
+    }
+    .form-hint {
+        @apply text-xs text-gray-500 dark:text-slate-400 mt-1;
+    }
+    .form-error {
+        @apply text-xs text-red-600 dark:text-red-400 mt-1;
+    }
+
+    /* Surfaces */
+    .card {
+        @apply bg-white rounded-2xl border border-gray-100 shadow-xs dark:bg-slate-800 dark:border-slate-700;
+    }
+    .card-pad {
+        @apply p-4 sm:p-5;
+    }
+    .modal-actions {
+        @apply flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2;
+    }
+    .modal-actions > .btn {
+        @apply w-full sm:w-auto;
+    }
+    .section-title {
+        @apply text-sm font-semibold text-gray-500 dark:text-slate-400 mb-3;
+    }
 }
 
 [dir="rtl"] table {

@@ -10,6 +10,21 @@ export function money(value, currency = '') {
     return currency ? `${formatted} ${currency}` : formatted
 }
 
+/**
+ * YYYY-MM-DD in the device's local time zone (not UTC), so "today"
+ * is correct right after midnight in Iraq (UTC+3).
+ */
+export function localDate(d = new Date()) {
+    const pad = (n) => String(n).padStart(2, '0')
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
+export function daysAgo(n) {
+    const d = new Date()
+    d.setDate(d.getDate() - n)
+    return localDate(d)
+}
+
 export function dateTime(value) {
     if (! value) return '-'
     return new Date(value).toLocaleString(dateLocale(), {

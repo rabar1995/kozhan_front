@@ -140,7 +140,7 @@
                             <div>
                                 <p class="text-xs font-bold text-gray-900 dark:text-white">{{ l.label }}</p>
                                 <p class="text-[11px] text-gray-500 dark:text-slate-400">
-                                    {{ l.dir === 'rtl' ? 'Right-to-Left (RTL)' : 'Left-to-Right (LTR)' }}
+                                    {{ l.dir === 'rtl' ? $t('settings.rtl') : $t('settings.ltr') }}
                                 </p>
                             </div>
                         </div>
@@ -179,7 +179,7 @@
                             />
                             <div>
                                 <div class="flex items-center gap-2">
-                                    <h5 class="text-xs sm:text-sm font-bold text-gray-900 dark:text-white">Kozhan Co PRO</h5>
+                                    <h5 class="text-xs sm:text-sm font-bold text-gray-900 dark:text-white">Kozhan Co</h5>
                                     <span
                                         v-if="isInstalled"
                                         class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
@@ -213,25 +213,20 @@
                             <span class="w-2 h-2 rounded-full" :class="isOffline ? 'bg-amber-400' : 'bg-emerald-500 animate-pulse'" />
                             <span>{{ isOffline ? $t('pwa.offline') : $t('settings.offlineReady') }}</span>
                         </div>
-                        <span class="font-mono text-[10px] text-gray-400">PWA v1.3</span>
+
                     </div>
                 </div>
             </div>
 
             <!-- ═══════ FOOTER ═══════ -->
-            <div class="pt-2 flex items-center justify-between">
-                <div class="flex items-center gap-2 text-xs text-gray-400 truncate">
-                    <span class="truncate">{{ auth.userName }}</span>
-                    <span>•</span>
-                    <span class="font-medium text-gray-500 dark:text-slate-400">{{ auth.officeName || 'Kozhan Co' }}</span>
+            <div class="pt-2 flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3">
+                <p class="text-xs text-gray-400 truncate">
+                    {{ auth.userName }} · {{ auth.officeName || 'Kozhan Co' }}
+                </p>
+                <div class="flex gap-2">
+                    <button type="button" class="btn btn-soft-danger flex-1 sm:flex-none" @click="logout">{{ $t('nav.logout') }}</button>
+                    <button type="button" class="btn btn-secondary flex-1 sm:flex-none" @click="$emit('update:modelValue', false)">{{ $t('settings.done') }}</button>
                 </div>
-                <button
-                    type="button"
-                    class="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 text-xs font-semibold transition-colors"
-                    @click="$emit('update:modelValue', false)"
-                >
-                    {{ $t('settings.done') }}
-                </button>
             </div>
         </div>
     </Modal>
@@ -239,6 +234,8 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import Modal from './Modal.vue'
 import { useTheme } from '../composables/useTheme'
 import { usePwa } from '../composables/usePwa'
@@ -250,10 +247,12 @@ defineProps({
     modelValue: { type: Boolean, default: false },
 })
 
-defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue'])
+const router = useRouter()
 
+const { t } = useI18n()
 const auth = useAuthStore()
-const toast = useToast()
+const { showToast } = useToast()
 const { themeMode, setTheme } = useTheme()
 const { isInstalled, isOffline, promptInstall } = usePwa()
 
@@ -263,10 +262,17 @@ function changeLocale(code) {
     setLocale(code)
 }
 
+// Phones reach Settings from the header, so sign-out lives here too.
+async function logout() {
+    emit('update:modelValue', false)
+    await auth.logout()
+    router.push({ name: 'login' })
+}
+
 async function handleInstall() {
     const outcome = await promptInstall()
     if (outcome === 'accepted') {
-        toast.success('App installed successfully!')
+        showToast({ message: t('settings.installedToast') })
     }
 }
 </script>

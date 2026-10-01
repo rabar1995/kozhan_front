@@ -1,97 +1,115 @@
 <template>
     <div>
-        <div v-if="error" class="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 mb-4">
-            {{ error }}
+        <Alert v-if="error" type="error" dismissible class="mb-4" @dismiss="error = ''">{{ error }}</Alert>
+
+        <!-- Period: quick presets + custom dates, applies on change -->
+        <div class="card card-pad mb-6">
+            <div class="flex flex-wrap gap-2 mb-3">
+                <button
+                    v-for="p in presets"
+                    :key="p.key"
+                    class="btn btn-sm"
+                    :class="activePreset === p.key ? 'btn-primary' : 'btn-secondary'"
+                    @click="applyPreset(p.key)"
+                >{{ $t(p.label) }}</button>
+            </div>
+            <div class="grid grid-cols-2 gap-3 max-w-md">
+                <div>
+                    <label class="form-label" for="pl-from">{{ $t('reports.startDate') }}</label>
+                    <input id="pl-from" v-model="filters.start_date" type="date" class="form-input" @change="activePreset = ''" />
+                </div>
+                <div>
+                    <label class="form-label" for="pl-to">{{ $t('reports.endDate') }}</label>
+                    <input id="pl-to" v-model="filters.end_date" type="date" class="form-input" @change="activePreset = ''" />
+                </div>
+            </div>
         </div>
 
-        <div class="flex flex-wrap items-end gap-3 mb-6">
-            <div>
-                <label class="block text-xs font-medium text-gray-500 mb-1">{{ $t('reports.startDate') }}</label>
-                <input v-model="filters.start_date" type="date" class="rounded-lg border border-gray-300 px-3 py-2 text-sm" />
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-gray-500 mb-1">{{ $t('reports.endDate') }}</label>
-                <input v-model="filters.end_date" type="date" class="rounded-lg border border-gray-300 px-3 py-2 text-sm" />
-            </div>
-            <button
-                class="px-4 py-2 text-sm rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700"
-                :disabled="loading"
-                @click="load"
-            >
-                {{ loading ? $t('common.loading') : $t('reports.runReport') }}
-            </button>
+        <div v-if="loading && !rows" class="space-y-3">
+            <div v-for="i in 3" :key="i" class="h-24 rounded-2xl animate-shimmer" />
         </div>
 
-        <template v-if="rows">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <KpiCard :label="$t('reports.totalRevenue')" :value="totals.revenue" tone="green" money />
-                <KpiCard :label="$t('reports.totalExpenses')" :value="totals.expense" tone="red" money />
-                <KpiCard :label="$t('reports.netIncome')" :value="totals.net" :tone="totals.net >= 0 ? 'green' : 'red'" money />
-            </div>
+        <template v-else-if="rows">
+            <EmptyState v-if="!byCurrency.length" :title="$t('reports.noData')" :text="$t('reports.noDataHint')" />
 
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
-                <table class="min-w-full text-sm table-enhanced">
-                    <thead class="bg-gray-50 text-start text-xs uppercase tracking-wide text-gray-500">
-                        <tr>
-                            <th class="px-4 py-3">{{ $t('reports.category') }}</th>
-                            <th class="px-4 py-3">{{ $t('reports.account') }}</th>
-                            <th class="px-4 py-3">{{ $t('reports.currency') }}</th>
-                            <th class="px-4 py-3 text-end">{{ $t('reports.amount') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        <tr v-if="!rows.length">
-                            <td colspan="4" class="px-4 py-8 text-center text-gray-400">{{ $t('reports.noData') }}</td>
-                        </tr>
-                        <tr v-for="(row, i) in rows" :key="i" class="hover:bg-gray-50">
-                            <td class="px-4 py-3">
-                                <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium"
-                                    :class="row.category === 'revenue' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'">
-                                    {{ $t(`reports.categories.${row.category}`, row.category) }}
-                                </span>
-                            </td>
-                            <td class="px-4 py-3 text-gray-800">{{ row.account_name }}</td>
-                            <td class="px-4 py-3">{{ row.currency_code }}</td>
-                            <td class="px-4 py-3 text-end font-semibold" :class="Number(row.amount) < 0 ? 'text-red-600' : 'text-gray-900'">
-                                {{ money(row.amount) }}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <p class="text-xs text-gray-400 mt-3">
-                {{ $t('reports.note') }}
-            </p>
+            <!-- One summary per currency: never add IQD and USD together -->
+            <section v-for="cur in byCurrency" :key="cur.currency" class="mb-6">
+                <h3 class="section-title">{{ cur.currency }}</h3>
+                <div class="grid grid-cols-3 gap-3 mb-3">
+                    <KpiCard :label="$t('reports.totalRevenue')" :amounts="[{ currency: cur.currency, amount: cur.revenue }]" tone="green" />
+                    <KpiCard :label="$t('reports.totalExpenses')" :amounts="[{ currency: cur.currency, amount: cur.expense }]" tone="red" />
+                    <KpiCard :label="$t('reports.netIncome')" :amounts="[{ currency: cur.currency, amount: cur.net }]" :tone="cur.net >= 0 ? 'green' : 'red'" />
+                </div>
+                <ul class="card divide-y divide-gray-100">
+                    <li v-for="(row, i) in cur.rows" :key="i" class="flex items-center justify-between gap-3 px-4 py-3">
+                        <div class="min-w-0">
+                            <p class="text-sm text-gray-900 truncate">{{ row.account_name }}</p>
+                            <p class="text-xs" :class="row.category === 'revenue' ? 'text-emerald-700' : 'text-red-600'">{{ $t(`reports.categories.${row.category}`) }}</p>
+                        </div>
+                        <p class="text-sm font-semibold tabular-nums" :class="Number(row.amount) < 0 ? 'text-red-600' : 'text-gray-900'">{{ money(row.amount, cur.currency) }}</p>
+                    </li>
+                </ul>
+            </section>
+            <p class="form-hint">{{ $t('reports.note') }}</p>
         </template>
     </div>
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { api, apiError } from '../api/client'
-import { money } from '../utils/format'
+import { money, localDate } from '../utils/format'
 import KpiCard from '../components/KpiCard.vue'
+import Alert from '../components/ui/Alert.vue'
+import EmptyState from '../components/ui/EmptyState.vue'
 
-const filters = reactive({
-    start_date: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10),
-    end_date: new Date().toISOString().slice(0, 10),
-})
+const presets = [
+    { key: 'thisMonth', label: 'reports.thisMonth' },
+    { key: 'lastMonth', label: 'reports.lastMonth' },
+    { key: 'thisYear', label: 'reports.thisYear' },
+]
 
+function rangeFor(key) {
+    const now = new Date()
+    if (key === 'lastMonth') {
+        return {
+            start_date: localDate(new Date(now.getFullYear(), now.getMonth() - 1, 1)),
+            end_date: localDate(new Date(now.getFullYear(), now.getMonth(), 0)),
+        }
+    }
+    if (key === 'thisYear') {
+        return { start_date: localDate(new Date(now.getFullYear(), 0, 1)), end_date: localDate(now) }
+    }
+    return { start_date: localDate(new Date(now.getFullYear(), now.getMonth(), 1)), end_date: localDate(now) }
+}
+
+const activePreset = ref('thisMonth')
+const filters = reactive(rangeFor('thisMonth'))
 const rows = ref(null)
 const loading = ref(false)
 const error = ref('')
 
-const totals = computed(() => {
-    const t = { revenue: 0, expense: 0, net: 0 }
+const byCurrency = computed(() => {
+    const map = {}
     for (const row of rows.value || []) {
-        if (row.category === 'revenue') t.revenue += Number(row.amount)
-        if (row.category === 'expense') t.expense += Number(row.amount)
+        const c = row.currency_code || '?'
+        map[c] ??= { currency: c, revenue: 0, expense: 0, net: 0, rows: [] }
+        if (row.category === 'revenue') map[c].revenue += Number(row.amount)
+        if (row.category === 'expense') map[c].expense += Number(row.amount)
+        map[c].rows.push(row)
     }
-    t.net = t.revenue - t.expense
-    return t
+    return Object.values(map)
+        .map((m) => ({ ...m, net: m.revenue - m.expense }))
+        .sort((a, b) => a.currency.localeCompare(b.currency))
 })
 
+function applyPreset(key) {
+    activePreset.value = key
+    Object.assign(filters, rangeFor(key))
+}
+
 async function load() {
+    if (! filters.start_date || ! filters.end_date) return
     loading.value = true
     error.value = ''
     try {
@@ -104,5 +122,6 @@ async function load() {
     }
 }
 
-onMounted(() => load())
+watch(filters, load)
+onMounted(load)
 </script>

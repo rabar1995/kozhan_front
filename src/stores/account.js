@@ -39,8 +39,8 @@ export const useAccountStore = defineStore('account', {
             const res = await api.patch(`/accounts/${id}/activate`)
             return res.data
         },
-        async deleteAccount(id, force = false) {
-            const res = await api.delete(`/accounts/${id}`, { params: force ? { force: true } : {} })
+        async deleteAccount(id) {
+            const res = await api.delete(`/accounts/${id}`)
             return res.data
         },
         ledger(id, params = {}) {

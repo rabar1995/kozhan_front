@@ -1,61 +1,77 @@
 <template>
     <div>
-        <div v-if="error" class="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 mb-4">
-            {{ error }}
-        </div>
+        <PageHeader :text="$t('audit.intro')" />
+        <Alert v-if="error" type="error" dismissible class="mb-4" @dismiss="error = ''">{{ error }}</Alert>
 
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
-            <table class="min-w-full text-sm table-enhanced">
-                <thead class="bg-gray-50 text-start text-xs uppercase tracking-wide text-gray-500">
-                    <tr>
-                        <th class="px-4 py-3">{{ $t('audit.date') }}</th>
-                        <th class="px-4 py-3">{{ $t('audit.action') }}</th>
-                        <th class="px-4 py-3">{{ $t('audit.entity') }}</th>
-                        <th class="px-4 py-3">{{ $t('audit.user') }}</th>
-                        <th class="px-4 py-3">{{ $t('audit.ip') }}</th>
-                        <th class="px-4 py-3">{{ $t('audit.payload') }}</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100">
-                    <tr v-if="loading">
-                        <td colspan="6" class="px-4 py-8 text-center text-gray-400">{{ $t('common.loading') }}</td>
-                    </tr>
-                    <tr v-else-if="!logs.length">
-                        <td colspan="6" class="px-4 py-8 text-center text-gray-400">{{ $t('audit.noEntries') }}</td>
-                    </tr>
-                    <tr v-for="log in logs" :key="log.id" class="hover:bg-gray-50 align-top">
-                        <td class="px-4 py-3 text-gray-500 whitespace-nowrap">{{ dateTime(log.created_at) }}</td>
-                        <td class="px-4 py-3 font-medium text-gray-800">{{ log.action }}</td>
-                        <td class="px-4 py-3 text-gray-600">
-                            {{ log.entity_type }}<span v-if="log.entity_id" class="text-gray-400 text-xs"> · {{ log.entity_id.slice(0, 8) }}</span>
-                        </td>
-                        <td class="px-4 py-3">{{ log.user?.name || '-' }}</td>
-                        <td class="px-4 py-3 text-gray-500 text-xs">{{ log.ip_address }}</td>
-                        <td class="px-4 py-3">
-                            <details v-if="log.new_values && Object.keys(log.new_values).length">
-                                <summary class="text-xs text-indigo-600 cursor-pointer">{{ $t('common.view') }}</summary>
-                                <pre class="text-[10px] bg-gray-50 rounded p-2 mt-1 overflow-x-auto max-w-xs">{{ JSON.stringify(log.new_values, null, 2) }}</pre>
-                            </details>
-                            <span v-else class="text-gray-300 text-xs">—</span>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+        <div v-if="loading && !logs.length" class="space-y-3">
+            <div v-for="i in 4" :key="i" class="h-14 rounded-2xl animate-shimmer" />
         </div>
+        <EmptyState v-else-if="!logs.length" :title="$t('audit.noEntries')" />
+        <ul v-else class="card divide-y divide-gray-100">
+            <li v-for="log in logs" :key="log.id" class="px-4 py-3">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="text-sm text-gray-900">
+                            <span class="font-semibold">{{ log.user?.name || '—' }}</span>
+                            {{ describe(log) }}
+                        </p>
+                        <p class="text-xs text-gray-400">{{ dateTime(log.created_at) }}</p>
+                    </div>
+                    <button
+                        v-if="log.new_values && Object.keys(log.new_values).length"
+                        type="button"
+                        class="btn btn-ghost btn-sm shrink-0"
+                        :aria-expanded="openIds.has(log.id)"
+                        @click="toggle(log.id)"
+                    >{{ openIds.has(log.id) ? $t('common.hide') : $t('common.details') }}</button>
+                </div>
+                <div v-if="openIds.has(log.id)" class="mt-2 rounded-xl bg-gray-50 p-3 text-xs text-gray-600 space-y-1">
+                    <p class="text-gray-400">{{ log.action }} · {{ log.ip_address }}</p>
+                    <pre class="overflow-x-auto whitespace-pre-wrap break-all" dir="ltr">{{ JSON.stringify(log.new_values, null, 2) }}</pre>
+                </div>
+            </li>
+        </ul>
         <Pagination :meta="meta" @page="load" />
     </div>
 </template>
 
 <script setup>
 import { onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { api, apiError } from '../api/client'
 import { dateTime } from '../utils/format'
 import Pagination from '../components/Pagination.vue'
+import Alert from '../components/ui/Alert.vue'
+import EmptyState from '../components/ui/EmptyState.vue'
+import PageHeader from '../components/ui/PageHeader.vue'
+
+const { t, te } = useI18n()
 
 const logs = ref([])
 const meta = ref(null)
 const loading = ref(false)
 const error = ref('')
+const openIds = ref(new Set())
+
+function toggle(id) {
+    const next = new Set(openIds.value)
+    next.has(id) ? next.delete(id) : next.add(id)
+    openIds.value = next
+}
+
+/**
+ * "POST api/remittances/incoming" -> "created an incoming remittance".
+ * Falls back to a generic verb + area when no exact phrase exists.
+ */
+function describe(log) {
+    const [method = '', path = ''] = String(log.action || '').split(' ')
+    const parts = path.replace(/^api\//, '').split('/').filter((p) => p && ! /^[0-9a-f-]{20,}$/i.test(p))
+    const key = `audit.actions.${method.toLowerCase()}_${parts.join('_')}`
+    if (te(key)) return t(key)
+    const verb = te(`audit.verbs.${method.toLowerCase()}`) ? t(`audit.verbs.${method.toLowerCase()}`) : method
+    const area = parts[0] && te(`audit.areas.${parts[0]}`) ? t(`audit.areas.${parts[0]}`) : (parts[0] || log.entity_type || '')
+    return `${verb} ${area}`.trim()
+}
 
 async function load(page = 1) {
     loading.value = true

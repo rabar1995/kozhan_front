@@ -4,7 +4,7 @@
             <h3 class="text-sm font-semibold text-gray-700">{{ $t('dashboard.urgentFeed') }}</h3>
             <router-link to="/remittances/pending"
                 class="text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors">
-                {{ $t('dashboard.viewAll') }} →
+                {{ $t('dashboard.viewAll') }}
             </router-link>
         </div>
 
@@ -22,10 +22,9 @@
             <div v-for="row in pendingRows" :key="row.id"
                 class="flex items-center justify-between py-2.5 px-3 rounded-xl hover:bg-amber-50/50 transition-colors group">
                 <div class="min-w-0 flex-1">
-                    <div class="flex items-center gap-2 text-sm">
-                        <span class="font-semibold text-gray-800 truncate">{{ row.receiver_name }}</span>
-                        <span class="text-xs text-gray-400">←</span>
-                        <span class="text-gray-500 truncate text-xs">{{ row.sender_name }}</span>
+                    <div class="text-sm">
+                        <span class="font-semibold text-gray-800 truncate block">{{ row.receiver_name }}</span>
+                        <span class="text-gray-500 truncate text-xs block">{{ $t('dashboard.fromSender', { name: row.sender_name }) }}</span>
                     </div>
                     <div class="flex items-center gap-2 mt-0.5">
                         <span class="text-xs font-medium text-amber-600">{{ row.remittance_number }}</span>
@@ -38,7 +37,7 @@
                     </span>
                     <button
                         v-if="can('complete-remittance')"
-                        class="opacity-0 group-hover:opacity-100 px-2.5 py-1 text-[11px] font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-all duration-200 whitespace-nowrap"
+                        class="btn btn-success btn-sm"
                         @click="$emit('complete', row)"
                     >
                         {{ $t('dashboard.completeNow') }}
@@ -74,9 +73,9 @@ const loading = ref(false)
 function elapsedText(dateStr) {
     if (!dateStr) return ''
     const mins = Math.floor((Date.now() - new Date(dateStr).getTime()) / 60000)
-    if (mins < 1) return '< 1 min'
-    if (mins > 1440) return `${Math.floor(mins / 1440)}d`
-    if (mins > 60) return `${Math.floor(mins / 60)}h`
+    if (mins < 1) return t('dashboard.justNow')
+    if (mins >= 1440) return t('dashboard.elapsedDays', { n: Math.floor(mins / 1440) })
+    if (mins >= 60) return t('dashboard.elapsedHours', { n: Math.floor(mins / 60) })
     return t('dashboard.elapsed', { mins })
 }
 

@@ -43,8 +43,8 @@ export const useRemittanceStore = defineStore('remittance', {
             return res.data
         },
         async complete(id, payload) {
+            // Callers refresh their own list (all / pending / dashboard).
             const res = await api.patch(`/remittances/${id}/complete`, payload)
-            await this.fetchPending()
             return res.data
         },
         async cancel(id, reason) {

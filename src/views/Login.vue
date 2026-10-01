@@ -9,42 +9,48 @@
             <p class="text-slate-400 mt-1 text-sm">{{ $t('auth.tagline') }}</p>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-2xl p-8">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 sm:p-8">
             <h2 class="text-lg font-semibold text-gray-900 mb-6">{{ $t('auth.signInTitle') }}</h2>
 
-            <div v-if="error" class="mb-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
-                {{ error }}
-            </div>
+            <Alert v-if="error" type="error" class="mb-4">{{ error }}</Alert>
 
             <form class="space-y-4" @submit.prevent="submit">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('auth.phoneOrUsername') }}</label>
+                    <label class="form-label" for="login-id">{{ $t('auth.phoneOrUsername') }}</label>
+                    <!-- Text (not tel) so usernames can be typed too -->
                     <input
+                        id="login-id"
                         v-model="form.phone"
-                        type="tel"
+                        type="text"
                         required
-                        autocomplete="tel"
-                        inputmode="tel"
-                        class="w-full rounded-lg border-gray-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                        autocomplete="username"
+                        autocapitalize="off"
+                        spellcheck="false"
+                        dir="ltr"
+                        class="form-input"
                         placeholder="07701234567"
                     />
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('auth.password') }}</label>
-                    <input
-                        v-model="form.password"
-                        type="password"
-                        required
-                        autocomplete="current-password"
-                        class="w-full rounded-lg border-gray-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                        placeholder="••••••••"
-                    />
+                    <label class="form-label" for="login-pass">{{ $t('auth.password') }}</label>
+                    <div class="relative">
+                        <input
+                            id="login-pass"
+                            v-model="form.password"
+                            :type="showPassword ? 'text' : 'password'"
+                            required
+                            autocomplete="current-password"
+                            class="form-input pe-12"
+                        />
+                        <button
+                            type="button"
+                            class="absolute inset-y-0 end-0 px-3 text-xs font-medium text-gray-500 hover:text-gray-800"
+                            :aria-label="showPassword ? $t('auth.hidePassword') : $t('auth.showPassword')"
+                            @click="showPassword = !showPassword"
+                        >{{ showPassword ? $t('common.hide') : $t('common.view') }}</button>
+                    </div>
                 </div>
-                <button
-                    type="submit"
-                    :disabled="loading"
-                    class="w-full py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50"
-                >
+                <button type="submit" :disabled="loading" class="btn btn-primary btn-block">
                     {{ loading ? $t('auth.signingIn') : $t('auth.signIn') }}
                 </button>
             </form>
@@ -58,12 +64,14 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { apiError } from '../api/client'
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
+import Alert from '../components/ui/Alert.vue'
 
 const auth = useAuthStore()
 const router = useRouter()
 const route = useRoute()
 
 const form = reactive({ phone: '', password: '' })
+const showPassword = ref(false)
 const loading = ref(false)
 const error = ref('')
 

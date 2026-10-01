@@ -1,61 +1,52 @@
 <template>
     <div>
-        <!-- ═══════ EDIT MODAL ═══════ -->
+        <!-- ═══════ EDIT ═══════ -->
         <Modal :open="!!editAccount" :title="$t('accounts.editTitle')" :z-index="60" @close="$emit('close-edit')">
-            <form class="space-y-4" @submit.prevent="submitEdit">
+            <form class="space-y-4" novalidate @submit.prevent="submitEdit">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('accounts.nameRequired') }}</label>
-                    <input v-model="editForm.name" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
-                    <p v-if="errors.name" class="text-xs text-red-600 mt-1">{{ errors.name[0] }}</p>
+                    <label class="form-label" for="we-name">{{ $t('accounts.name') }} <span class="text-red-500">*</span></label>
+                    <input id="we-name" v-model="editForm.name" required class="form-input" />
+                    <p v-if="errors.name" class="form-error">{{ errors.name[0] }}</p>
                 </div>
-                <div class="grid grid-cols-2 gap-3">
+
+                <!-- Agent wallets keep their type and currency -->
+                <div v-if="!isAgentWallet" class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('accounts.typeRequired') }}</label>
-                        <select v-model="editForm.account_type_id" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
-                            <option value="" disabled>{{ $t('common.select') }}</option>
-                            <option v-for="t in accountTypes" :key="t.id" :value="t.id">{{ t.name }} ({{ t.code }})</option>
+                        <label class="form-label" for="we-type">{{ $t('accounts.type') }}</label>
+                        <select id="we-type" v-model="editForm.account_type_id" class="form-input">
+                            <option v-for="tp in typeOptions" :key="tp.id" :value="tp.id">{{ typeLabel(tp) }}</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('accounts.currencyRequired') }}</label>
-                        <select v-model="editForm.currency_id" required :disabled="editBalance !== 0"
-                            :class="editBalance !== 0 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : ''"
-                            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
-                            <option value="" disabled>{{ $t('common.select') }}</option>
+                        <label class="form-label" for="we-cur">{{ $t('accounts.currency') }}</label>
+                        <select id="we-cur" v-model="editForm.currency_id" class="form-input" :disabled="editBalance !== 0">
                             <option v-for="c in currencies" :key="c.id" :value="c.id">{{ c.code }}</option>
                         </select>
-                        <p v-if="editBalance !== 0" class="text-xs text-gray-500 mt-1">{{ $t('accounts.currencyLocked') }}</p>
-                        <p v-if="errors.currency_id" class="text-xs text-red-600 mt-1">{{ errors.currency_id[0] }}</p>
+                        <p v-if="editBalance !== 0" class="form-hint">{{ $t('accounts.currencyLocked') }}</p>
+                        <p v-if="errors.currency_id" class="form-error">{{ errors.currency_id[0] }}</p>
                     </div>
                 </div>
+
                 <div v-if="!balanceLocked">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('accounts.newBalance') }}</label>
-                    <MoneyInput
-                        v-model="editForm.new_balance"
-                        :max-decimals="4"
-                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                    />
-                    <p class="text-xs text-gray-500 mt-1">
-                        {{ $t('accounts.currentBalance') }}: {{ money(editBalance, editAccount?.currency?.code || '') }}
-                    </p>
-                    <p v-if="errors.new_balance" class="text-xs text-red-600 mt-1">{{ errors.new_balance[0] }}</p>
+                    <label class="form-label" for="we-balance">{{ $t('accounts.newBalance') }}</label>
+                    <MoneyInput id="we-balance" v-model="editForm.new_balance" :max-decimals="4" class="form-input" />
+                    <p class="form-hint">{{ $t('accounts.currentBalance') }}: {{ money(editBalance, editAccount?.currency?.code || '') }}</p>
+                    <p v-if="isAgentWallet" class="form-hint text-amber-700">{{ $t('accounts.agentBalanceWarning') }}</p>
+                    <p v-if="errors.new_balance" class="form-error">{{ errors.new_balance[0] }}</p>
                 </div>
-                <p v-else class="text-xs text-gray-500 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
-                    {{ $t('accounts.balanceLocked') }}
-                </p>
-                <LogoPicker v-model="editForm.logo" :name="editForm.name" :existing-url="editAccount?.logo_url || ''" />
-                <p v-if="editError" class="text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{{ editError }}</p>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" class="px-4 py-2 text-sm rounded-lg border hover:bg-gray-50" @click="$emit('close-edit')">{{ $t('common.cancel') }}</button>
-                    <button type="submit" :disabled="busy" class="px-4 py-2 text-sm rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 font-medium">
-                        {{ busy ? $t('common.saving') : $t('common.save') }}
-                    </button>
+                <p v-else class="form-hint">{{ $t('accounts.balanceLocked') }}</p>
+
+                <LogoPicker v-model="editForm.logo" :name="editForm.name" />
+                <Alert v-if="editError" type="error">{{ editError }}</Alert>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" @click="$emit('close-edit')">{{ $t('common.cancel') }}</button>
+                    <button type="submit" :disabled="busy" class="btn btn-primary">{{ busy ? $t('common.saving') : $t('common.save') }}</button>
                 </div>
             </form>
         </Modal>
 
         <!-- ═══════ BALANCE CHANGE CONFIRM ═══════ -->
-        <Modal :open="showBalanceConfirm" :title="$t('accounts.balanceChangeTitle')" :z-index="60" @close="showBalanceConfirm = false">
+        <Modal :open="showBalanceConfirm" :title="$t('accounts.balanceChangeTitle')" :z-index="70" @close="showBalanceConfirm = false">
             <div class="space-y-4">
                 <p class="text-sm text-gray-600">
                     {{ $t('accounts.balanceChangeConfirm', {
@@ -64,57 +55,43 @@
                         new: money(Number(editForm.new_balance), editAccount?.currency?.code || ''),
                     }) }}
                 </p>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button class="px-4 py-2 text-sm rounded-lg border hover:bg-gray-50" @click="showBalanceConfirm = false">{{ $t('common.cancel') }}</button>
-                    <button
-                        :disabled="busy"
-                        class="px-4 py-2 text-sm rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 font-medium"
-                        @click="doUpdate"
-                    >
-                        {{ busy ? $t('common.saving') : $t('common.save') }}
-                    </button>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" @click="showBalanceConfirm = false">{{ $t('common.cancel') }}</button>
+                    <button :disabled="busy" class="btn btn-primary" @click="doUpdate">{{ busy ? $t('common.saving') : $t('accounts.confirmChange') }}</button>
                 </div>
             </div>
         </Modal>
 
-        <!-- ═══════ DELETE CONFIRM (with force-delete flow) ═══════ -->
-        <Modal :open="!!deleteAccount" :title="$t('accounts.deleteTitle')" :z-index="60" @close="closeDelete">
-            <div class="space-y-4">
-                <p class="text-sm text-gray-600">{{ $t('accounts.deleteConfirm', { name: deleteAccount?.name }) }}</p>
-                <p v-if="deleteAccount?.is_active" class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                    {{ $t('accounts.deleteActive') }}
+        <!-- ═══════ MORE: deactivate / delete ═══════ -->
+        <Modal :open="!!deleteAccount" :title="deleteAccount?.name || ''" :z-index="60" @close="closeDelete">
+            <div class="space-y-5">
+                <p class="text-sm text-gray-600">
+                    {{ $t('accounts.currentBalance') }}:
+                    <span class="font-semibold text-gray-900">{{ money(deleteBalance, deleteAccount?.currency?.code || '') }}</span>
                 </p>
-                <p v-if="deleteError" class="text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-                    {{ deleteError }}
-                </p>
-                <template v-if="deleteFailed">
-                    <p class="text-xs text-red-700 font-semibold">{{ $t('accounts.forceDeleteNote') }}</p>
-                    <button
-                        :disabled="busy"
-                        class="w-full px-4 py-2 text-sm rounded-lg bg-red-700 text-white hover:bg-red-800 disabled:opacity-50 font-semibold"
-                        @click="doDelete(true)"
-                    >
-                        {{ busy ? $t('common.saving') : $t('accounts.forceDelete') }}
-                    </button>
-                </template>
-                <div class="flex items-center justify-between gap-2 pt-2">
-                    <button
-                        class="px-3 py-2 text-xs font-semibold rounded-lg text-amber-700 hover:bg-amber-50 border border-amber-200"
-                        @click="toggleActive"
-                    >
+
+                <!-- Deactivate / activate -->
+                <div class="rounded-xl border border-gray-200 p-4">
+                    <p class="text-sm font-semibold text-gray-900">{{ deleteAccount?.is_active ? $t('accounts.deactivate') : $t('accounts.activate') }}</p>
+                    <p class="form-hint mb-3">{{ deleteAccount?.is_active ? $t('accounts.deactivateHint') : $t('accounts.activateHint') }}</p>
+                    <button class="btn btn-secondary btn-sm" :disabled="busy || (deleteAccount?.is_active && deleteBalance !== 0)" @click="toggleActive">
                         {{ deleteAccount?.is_active ? $t('accounts.deactivate') : $t('accounts.activate') }}
                     </button>
-                    <div class="flex gap-2">
-                        <button class="px-4 py-2 text-sm rounded-lg border hover:bg-gray-50" @click="closeDelete">{{ $t('common.cancel') }}</button>
-                        <button
-                            v-if="!deleteFailed"
-                            :disabled="busy"
-                            class="px-4 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 font-medium"
-                            @click="doDelete(false)"
-                        >
-                            {{ $t('accounts.delete') }}
-                        </button>
-                    </div>
+                </div>
+
+                <!-- Delete -->
+                <div class="rounded-xl border border-red-200 p-4">
+                    <p class="text-sm font-semibold text-red-700">{{ $t('accounts.delete') }}</p>
+                    <p class="form-hint mb-3">{{ $t('accounts.deleteConfirm', { name: deleteAccount?.name }) }}</p>
+                    <Alert v-if="deleteBalance !== 0" type="warning" class="mb-3">
+                        {{ $t('accounts.deleteNeedsZero', { balance: money(deleteBalance, deleteAccount?.currency?.code || '') }) }}
+                    </Alert>
+                    <button class="btn btn-danger btn-sm" :disabled="busy || deleteBalance !== 0" @click="doDelete">{{ $t('accounts.delete') }}</button>
+                </div>
+
+                <Alert v-if="deleteError" type="error">{{ deleteError }}</Alert>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" @click="closeDelete">{{ $t('common.close') }}</button>
                 </div>
             </div>
         </Modal>
@@ -123,17 +100,21 @@
 
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useAccountStore } from '../stores/account'
+import { useConfirm } from '../composables/useConfirm'
+import { useToast } from '../composables/useToast'
 import { apiError } from '../api/client'
 import { money } from '../utils/format'
 import Modal from './Modal.vue'
 import LogoPicker from './LogoPicker.vue'
 import MoneyInput from './MoneyInput.vue'
+import Alert from './ui/Alert.vue'
 
 const props = defineProps({
     /** Account loaded into the edit modal (null = closed) */
     editAccount: { type: Object, default: null },
-    /** Account loaded into the delete confirm modal (null = closed) */
+    /** Account loaded into the "more" modal (null = closed) */
     deleteAccount: { type: Object, default: null },
     /** Wallet type options for the edit select */
     accountTypes: { type: Array, default: () => [] },
@@ -142,23 +123,39 @@ const props = defineProps({
 
 const emit = defineEmits(['close-edit', 'close-delete', 'saved'])
 
+const { t, te } = useI18n()
 const accountStore = useAccountStore()
+const { confirm } = useConfirm()
+const { showToast } = useToast()
 
 const busy = ref(false)
 const errors = ref({})
 const editError = ref('')
 const showBalanceConfirm = ref(false)
 const deleteError = ref('')
-const deleteFailed = ref(false)
 
 const editForm = reactive({ name: '', account_type_id: '', currency_id: '', logo: '', new_balance: 0, old_balance: 0 })
 
-const editBalance = computed(() => Number(props.editAccount?.current_balance ?? 0))
+const round4 = (n) => Math.round(Number(n) * 10000) / 10000
 
-// Ledger-managed balances (agent wallets, system types) cannot be edited.
+const editBalance = computed(() => round4(props.editAccount?.current_balance ?? 0))
+const deleteBalance = computed(() => round4(props.deleteAccount?.current_balance ?? 0))
+const isAgentWallet = computed(() => props.editAccount?.account_type?.code === 'agent_wallet')
+
+// System ledger accounts cannot have their balance edited manually.
 const balanceLocked = computed(() =>
-    ['agent_wallet', 'exchange_pending', 'owner_equity'].includes(props.editAccount?.account_type?.code || ''),
+    ['exchange_pending', 'owner_equity'].includes(props.editAccount?.account_type?.code || ''),
 )
+
+const typeLabel = (tp) => (tp?.code && te(`accounts.types.${tp.code}`) ? t(`accounts.types.${tp.code}`) : tp?.name || '')
+
+// Always include the wallet's current type so the select shows it.
+const typeOptions = computed(() => {
+    const current = props.editAccount?.account_type
+    const list = [...props.accountTypes]
+    if (current && ! list.some((x) => x.id === current.id)) list.unshift(current)
+    return list
+})
 
 watch(
     () => props.editAccount,
@@ -167,65 +164,53 @@ watch(
         editForm.name = account.name
         editForm.account_type_id = account.account_type?.id || account.account_type_id || ''
         editForm.currency_id = account.currency?.id || account.currency_id || ''
-        editForm.logo = ''
-        editForm.old_balance = Number(account.current_balance ?? 0)
+        editForm.logo = account.logo_url || ''
+        editForm.old_balance = round4(account.current_balance ?? 0)
         editForm.new_balance = editForm.old_balance
         errors.value = {}
         editError.value = ''
     },
 )
 
-const round4 = (n) => Math.round(Number(n) * 10000) / 10000
+const balanceChanged = () => round4(editForm.new_balance) !== round4(editForm.old_balance)
 
 async function submitEdit() {
-    // Balance changes need explicit confirmation; everything else saves directly.
     errors.value = {}
     editError.value = ''
-    const balanceChanged = round4(editForm.new_balance) !== round4(editForm.old_balance)
-    if (balanceChanged) {
+    if (! editForm.name.trim()) {
+        errors.value = { name: [t('forms.required')] }
+        return
+    }
+    if (balanceChanged()) {
         showBalanceConfirm.value = true
         return
     }
-    busy.value = true
-    try {
-        await applyUpdate()
-        emit('close-edit')
-        emit('saved')
-    } catch (e) {
-        const parsed = apiError(e)
-        errors.value = parsed.errors
-        editError.value = parsed.message
-    } finally {
-        busy.value = false
-    }
-}
-
-async function applyUpdate() {
-    if (! props.editAccount) return
-    const balanceChanged = round4(editForm.new_balance) !== round4(editForm.old_balance)
-    await accountStore.updateAccount(props.editAccount.id, {
-        name: editForm.name,
-        account_type_id: editForm.account_type_id,
-        currency_id: editForm.currency_id,
-        logo_url: editForm.logo ? editForm.logo : undefined,
-        new_balance: balanceChanged ? round4(editForm.new_balance) : undefined,
-    })
+    await doUpdate()
 }
 
 async function doUpdate() {
+    if (! props.editAccount) return
     busy.value = true
-    errors.value = {}
-    editError.value = ''
     try {
-        await applyUpdate()
+        const payload = {
+            name: editForm.name,
+            logo_url: editForm.logo || null,
+            new_balance: balanceChanged() ? round4(editForm.new_balance) : undefined,
+        }
+        if (! isAgentWallet.value) {
+            payload.account_type_id = editForm.account_type_id
+            payload.currency_id = editForm.currency_id
+        }
+        await accountStore.updateAccount(props.editAccount.id, payload)
         showBalanceConfirm.value = false
+        showToast({ message: t('accounts.savedToast', { name: editForm.name }) })
         emit('close-edit')
         emit('saved')
     } catch (e) {
         const parsed = apiError(e)
         errors.value = parsed.errors
-        showBalanceConfirm.value = false
         editError.value = parsed.message
+        showBalanceConfirm.value = false
     } finally {
         busy.value = false
     }
@@ -233,21 +218,29 @@ async function doUpdate() {
 
 function closeDelete() {
     deleteError.value = ''
-    deleteFailed.value = false
     emit('close-delete')
 }
 
-async function doDelete(force = false) {
-    if (! props.deleteAccount) return
+async function doDelete() {
+    if (! props.deleteAccount || deleteBalance.value !== 0) return
+    const name = props.deleteAccount.name
+    const ok = await confirm({
+        title: t('accounts.deleteTitle'),
+        message: t('accounts.deleteConfirm', { name }),
+        type: 'danger',
+        confirmText: t('accounts.delete'),
+        cancelText: t('common.cancel'),
+    })
+    if (! ok) return
     busy.value = true
     deleteError.value = ''
     try {
-        await accountStore.deleteAccount(props.deleteAccount.id, force)
+        await accountStore.deleteAccount(props.deleteAccount.id)
+        showToast({ message: t('accounts.deletedToast', { name }) })
         closeDelete()
         emit('saved')
     } catch (e) {
         deleteError.value = apiError(e).message
-        deleteFailed.value = true
     } finally {
         busy.value = false
     }

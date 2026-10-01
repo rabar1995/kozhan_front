@@ -1,11 +1,12 @@
 <template>
     <Teleport to="body">
-        <div class="fixed top-4 end-4 z-[100] flex flex-col gap-2 toast-container pointer-events-none" style="max-width: 380px;">
+        <div class="fixed top-3 inset-x-3 sm:inset-x-auto sm:top-4 sm:end-4 sm:w-[380px] z-[120] flex flex-col gap-2 toast-container pointer-events-none" aria-live="polite">
             <TransitionGroup name="toast">
                 <div
                     v-for="toast in toasts"
                     :key="toast.id"
-                    class="pointer-events-auto flex items-start gap-3 px-4 py-3 rounded-xl border shadow-lg backdrop-blur-md text-sm font-medium cursor-pointer"
+                    role="status"
+                    class="relative overflow-hidden pointer-events-auto flex items-start gap-3 px-4 py-3 rounded-xl border shadow-lg backdrop-blur-md text-sm font-medium cursor-pointer"
                     :class="toastClasses(toast.type)"
                     @click="removeToast(toast.id)"
                 >
@@ -36,7 +37,7 @@
                     <button
                         class="shrink-0 p-0.5 rounded-md hover:bg-black/5 transition-colors"
                         @click.stop="removeToast(toast.id)"
-                        aria-label="Dismiss"
+                        :aria-label="$t('common.close')"
                     >
                         <svg class="w-4 h-4 opacity-50" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />

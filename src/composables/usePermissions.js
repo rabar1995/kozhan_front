@@ -1,5 +1,7 @@
+import { computed } from 'vue'
 import { useAuthStore } from '../stores/auth'
 
+// Mirrors the backend: only routes outside `role:owner` are open to managers.
 const MANAGER_ACTIONS = [
     'view-dashboard',
     'view-remittances',
@@ -7,6 +9,7 @@ const MANAGER_ACTIONS = [
     'complete-remittance',
     'view-agents',
     'create-agent',
+    'edit-agent',
     'view-shared-accounts',
     'view-expenses',
     'record-expense',
@@ -23,7 +26,8 @@ export function usePermissions() {
 
     return {
         can,
-        isOwner: auth.isOwner,
-        isManager: auth.isManager,
+        // Reactive: updates once /me has loaded.
+        isOwner: computed(() => auth.isOwner),
+        isManager: computed(() => auth.isManager),
     }
 }

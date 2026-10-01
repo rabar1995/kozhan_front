@@ -6,12 +6,12 @@
         <div class="flex items-center gap-1 order-1 sm:order-2">
             <!-- Previous -->
             <button
-                class="px-2.5 py-1.5 text-xs font-medium rounded-lg border border-gray-200 disabled:opacity-30 hover:bg-gray-50 transition-colors"
+                class="min-w-10 min-h-10 inline-flex items-center justify-center text-xs font-medium rounded-lg border border-gray-200 disabled:opacity-30 hover:bg-gray-50 transition-colors"
                 :disabled="meta.current_page <= 1"
                 :aria-label="$t('common.previous')"
                 @click="$emit('page', meta.current_page - 1)"
             >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 rtl:-scale-x-100" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
                 </svg>
             </button>
@@ -21,7 +21,7 @@
                 <span v-if="p === '...'" class="px-1.5 py-1 text-xs text-gray-400 select-none">…</span>
                 <button
                     v-else
-                    class="min-w-[32px] px-2 py-1.5 text-xs font-medium rounded-lg border transition-all"
+                    class="hidden sm:inline-flex items-center justify-center min-w-10 min-h-10 px-2 text-xs font-medium rounded-lg border transition-all"
                     :class="p === meta.current_page
                         ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
                         : 'border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300'"
@@ -33,12 +33,12 @@
 
             <!-- Next -->
             <button
-                class="px-2.5 py-1.5 text-xs font-medium rounded-lg border border-gray-200 disabled:opacity-30 hover:bg-gray-50 transition-colors"
+                class="min-w-10 min-h-10 inline-flex items-center justify-center text-xs font-medium rounded-lg border border-gray-200 disabled:opacity-30 hover:bg-gray-50 transition-colors"
                 :disabled="meta.current_page >= meta.last_page"
                 :aria-label="$t('common.next')"
                 @click="$emit('page', meta.current_page + 1)"
             >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 rtl:-scale-x-100" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                 </svg>
             </button>

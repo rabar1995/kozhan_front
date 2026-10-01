@@ -40,6 +40,18 @@
 
         <!-- Value -->
         <div v-if="skeleton" class="h-8 w-24 bg-gray-200 rounded-lg animate-pulse" />
+        <!-- One line per currency: amounts in different currencies are never added together -->
+        <div v-else-if="amounts" class="space-y-0.5">
+            <p v-if="!amounts.length" class="text-2xl font-bold tracking-tight" :class="valueColor">0</p>
+            <p
+                v-for="a in amounts"
+                :key="a.currency"
+                class="font-bold tracking-tight tabular-nums"
+                :class="[valueColor, amounts.length > 1 ? 'text-lg' : 'text-2xl']"
+            >
+                {{ moneyFmt(a.amount, a.currency) }}
+            </p>
+        </div>
         <p v-else class="text-2xl font-bold tracking-tight transition-colors duration-300" :class="valueColor">
             {{ display }}
         </p>
@@ -59,6 +71,8 @@ const props = defineProps({
     value: { type: [Number, String], default: null },
     tone: { type: String, default: 'gray' },
     money: { type: Boolean, default: false },
+    /** Per-currency amounts: [{ currency: 'IQD', amount: 1000 }] */
+    amounts: { type: Array, default: null },
     icon: { type: String, default: '' },
     skeleton: { type: Boolean, default: false },
 })
