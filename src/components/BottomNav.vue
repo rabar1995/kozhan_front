@@ -83,7 +83,7 @@ import Modal from './Modal.vue'
 defineEmits(['open-menu'])
 
 const { mainItems, isActive } = useNavigation()
-const { can } = usePermissions()
+const { can, isOwner } = usePermissions()
 
 const sheetOpen = ref(false)
 
@@ -92,6 +92,9 @@ const leftItems = computed(() => mainItems.value.slice(0, 2))
 const rightItem = computed(() => mainItems.value.find((i) => i.to === '/agents'))
 
 const newActions = computed(() => [
+    ...(isOwner.value
+        ? [{ to: '/exchange-deals', label: 'deals.openDeal', icon: 'exchangeDeals', tone: 'bg-sky-50 text-sky-600' }]
+        : []),
     ...(can('create-remittance')
         ? [
             { to: '/remittances/incoming', label: 'nav.bookIncoming', icon: 'incoming', tone: 'bg-emerald-50 text-emerald-600' },

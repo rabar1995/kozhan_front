@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div v-if="can('manage-accounts')">
         <!-- ═══════ EDIT ═══════ -->
         <Modal :open="!!editAccount" :title="$t('accounts.editTitle')" :z-index="60" @close="$emit('close-edit')">
             <form class="space-y-4" novalidate @submit.prevent="submitEdit">
@@ -29,7 +29,7 @@
 
                 <div v-if="!balanceLocked">
                     <label class="form-label" for="we-balance">{{ $t('accounts.newBalance') }}</label>
-                    <MoneyInput id="we-balance" v-model="editForm.new_balance" :max-decimals="4" class="form-input" />
+                    <MoneyInput id="we-balance" v-model="editForm.new_balance" :max-decimals="4" allow-negative blank-zero class="form-input" />
                     <p class="form-hint">{{ $t('accounts.currentBalance') }}: {{ money(editBalance, editAccount?.currency?.code || '') }}</p>
                     <p v-if="isAgentWallet" class="form-hint text-amber-700">{{ $t('accounts.agentBalanceWarning') }}</p>
                     <p v-if="errors.new_balance" class="form-error">{{ errors.new_balance[0] }}</p>
@@ -83,6 +83,9 @@
                 <div class="rounded-xl border border-red-200 p-4">
                     <p class="text-sm font-semibold text-red-700">{{ $t('accounts.delete') }}</p>
                     <p class="form-hint mb-3">{{ $t('accounts.deleteConfirm', { name: deleteAccount?.name }) }}</p>
+                    <Alert v-if="isLastAgentWallet" type="warning" class="mb-3">
+                        {{ $t('accounts.agentDeleteWarning', { name: deleteAccount?.agent?.name }) }}
+                    </Alert>
                     <Alert v-if="deleteBalance !== 0" type="warning" class="mb-3">
                         {{ $t('accounts.deleteNeedsZero', { balance: money(deleteBalance, deleteAccount?.currency?.code || '') }) }}
                     </Alert>
@@ -103,6 +106,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAccountStore } from '../stores/account'
 import { useConfirm } from '../composables/useConfirm'
+import { usePermissions } from '../composables/usePermissions'
 import { useToast } from '../composables/useToast'
 import { apiError } from '../api/client'
 import { money } from '../utils/format'
@@ -125,6 +129,7 @@ const emit = defineEmits(['close-edit', 'close-delete', 'saved'])
 
 const { t, te } = useI18n()
 const accountStore = useAccountStore()
+const { can } = usePermissions()
 const { confirm } = useConfirm()
 const { showToast } = useToast()
 
@@ -141,6 +146,17 @@ const round4 = (n) => Math.round(Number(n) * 10000) / 10000
 const editBalance = computed(() => round4(props.editAccount?.current_balance ?? 0))
 const deleteBalance = computed(() => round4(props.deleteAccount?.current_balance ?? 0))
 const isAgentWallet = computed(() => props.editAccount?.account_type?.code === 'agent_wallet')
+
+/**
+ * True when the wallet opened in the "more" modal is the agent's last
+ * agent_wallet account, so deleting it will also delete the agent.
+ */
+const isLastAgentWallet = computed(() => {
+    const agentId = props.deleteAccount?.agent?.id
+    if (! agentId) return false
+    return accountStore.accounts.filter((a) =>
+        a.account_type?.code === 'agent_wallet' && a.agent?.id === agentId).length <= 1
+})
 
 // System ledger accounts cannot have their balance edited manually.
 const balanceLocked = computed(() =>
@@ -224,9 +240,12 @@ function closeDelete() {
 async function doDelete() {
     if (! props.deleteAccount || deleteBalance.value !== 0) return
     const name = props.deleteAccount.name
+    const agentWarning = isLastAgentWallet.value
+        ? ' ' + t('accounts.agentDeleteWarning', { name: props.deleteAccount.agent?.name })
+        : ''
     const ok = await confirm({
         title: t('accounts.deleteTitle'),
-        message: t('accounts.deleteConfirm', { name }),
+        message: t('accounts.deleteConfirm', { name }) + agentWarning,
         type: 'danger',
         confirmText: t('accounts.delete'),
         cancelText: t('common.cancel'),

@@ -17,6 +17,10 @@ import { computed, ref } from 'vue'
 const props = defineProps({
     modelValue: { type: [Number, String], default: null },
     maxDecimals: { type: Number, default: 2 },
+    // Allow a leading minus (e.g. wallet balances can be owed either way).
+    allowNegative: { type: Boolean, default: false },
+    // Render nothing (instead of "0") when the resting value is zero.
+    blankZero: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -29,25 +33,31 @@ function groupThousands(digits) {
 }
 
 function parse(str) {
-    let s = String(str).replace(/,/g, '').replace(/[^0-9.]/g, '')
+    let s = String(str).replace(/,/g, '')
+    const negative = props.allowNegative && /^\s*-/.test(s)
+    s = s.replace(/[^0-9.]/g, '')
     const firstDot = s.indexOf('.')
     if (firstDot !== -1) {
         const intPart = s.slice(0, firstDot) || '0'
         const decPart = s.slice(firstDot + 1).replace(/\./g, '').slice(0, props.maxDecimals)
         s = `${intPart}.${decPart}`
     }
-    return s
+    return (negative ? '-' : '') + s
 }
 
 function group(text) {
-    const [intPart, decPart] = parse(text).split('.')
+    const parsed = parse(text)
+    const negative = parsed.startsWith('-')
+    const unsigned = parsed.replace('-', '')
+    if (unsigned === '' || unsigned === '.') return negative ? '-' : ''
+    const [intPart, decPart] = unsigned.split('.')
     const int = groupThousands(intPart || '0')
-    return decPart !== undefined ? `${int}.${decPart}` : int
+    return `${negative ? '-' : ''}${int}${decPart !== undefined ? `.${decPart}` : ''}`
 }
 
 function toNumber(str) {
     const s = parse(str)
-    if (s === '' || s === '.') return 0
+    if (s === '' || s === '.' || s === '-') return 0
     const n = Number(s)
     return Number.isFinite(n) ? n : 0
 }
@@ -59,8 +69,11 @@ const display = computed(() => {
     if (props.modelValue === null || props.modelValue === undefined || props.modelValue === '') return ''
     const n = Number(props.modelValue)
     if (! Number.isFinite(n)) return ''
-    const [ip, dp] = String(n).split('.')
-    return dp !== undefined ? `${groupThousands(ip)}.${dp}` : groupThousands(ip)
+    if (props.blankZero && n === 0) return ''
+    const negative = n < 0
+    const [ip, dp] = String(Math.abs(n)).split('.')
+    const int = groupThousands(ip)
+    return `${negative ? '-' : ''}${dp !== undefined ? `${int}.${dp}` : int}`
 })
 
 function digitsBefore(text, index) {

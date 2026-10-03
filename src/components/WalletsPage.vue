@@ -3,7 +3,7 @@
         <SectionTabs :tabs="tabs" :label="$t('nav.walletsGroup')" />
 
         <PageHeader :text="intro">
-            <button class="btn btn-primary" @click="openCreate">
+            <button v-if="can('manage-accounts')" class="btn btn-primary" @click="openCreate">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                 {{ $t('accounts.newWallet') }}
             </button>
@@ -38,7 +38,7 @@
             icon="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 110-6h.75A2.25 2.25 0 0018 1.5H6A2.25 2.25 0 003.75 3.75v16.5A2.25 2.25 0 006 22.5h12a2.25 2.25 0 002.25-2.25V12zM15 12a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"
         >
             <button v-if="searchQuery" class="btn btn-secondary" @click="searchQuery = ''">{{ $t('common.clearSearch') }}</button>
-            <button v-else class="btn btn-primary" @click="openCreate">{{ $t('accounts.newWallet') }}</button>
+            <button v-else-if="can('manage-accounts')" class="btn btn-primary" @click="openCreate">{{ $t('accounts.newWallet') }}</button>
         </EmptyState>
 
         <template v-else>
@@ -63,8 +63,8 @@
                         </p>
                         <div class="mt-auto pt-4 flex gap-2">
                             <button class="btn btn-secondary btn-sm flex-1" @click="historyAccount = account">{{ $t('history.button') }}</button>
-                            <button class="btn btn-ghost btn-sm" @click="editAccount = account">{{ $t('common.edit') }}</button>
-                            <button class="btn btn-ghost btn-sm" @click="manageAccount = account">{{ $t('accounts.more') }}</button>
+                            <button v-if="can('manage-accounts')" class="btn btn-ghost btn-sm" @click="editAccount = account">{{ $t('common.edit') }}</button>
+                            <button v-if="can('manage-accounts')" class="btn btn-ghost btn-sm" @click="manageAccount = account">{{ $t('accounts.more') }}</button>
                         </div>
                     </div>
                 </div>
@@ -97,8 +97,8 @@
                                 <td class="px-4 py-3">
                                     <div class="flex justify-end gap-1.5">
                                         <button class="btn btn-secondary btn-sm" @click="historyAccount = account">{{ $t('history.button') }}</button>
-                                        <button class="btn btn-ghost btn-sm" @click="editAccount = account">{{ $t('common.edit') }}</button>
-                                        <button class="btn btn-ghost btn-sm" @click="manageAccount = account">{{ $t('accounts.more') }}</button>
+                                        <button v-if="can('manage-accounts')" class="btn btn-ghost btn-sm" @click="editAccount = account">{{ $t('common.edit') }}</button>
+                                        <button v-if="can('manage-accounts')" class="btn btn-ghost btn-sm" @click="manageAccount = account">{{ $t('accounts.more') }}</button>
                                     </div>
                                 </td>
                             </tr>
@@ -136,7 +136,7 @@
                 </div>
                 <div>
                     <label class="form-label" for="w-open">{{ $t('accounts.openingBalance') }}</label>
-                    <MoneyInput id="w-open" v-model="form.opening_balance" :max-decimals="4" placeholder="0" class="form-input" />
+                    <MoneyInput id="w-open" v-model="form.opening_balance" :max-decimals="4" allow-negative blank-zero placeholder="0" class="form-input" />
                     <p class="form-hint">{{ $t('accounts.openingBalanceHint') }}</p>
                     <p v-if="errors.opening_balance" class="form-error">{{ errors.opening_balance[0] }}</p>
                 </div>
@@ -175,6 +175,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { api, apiError } from '../api/client'
 import { useAccountStore } from '../stores/account'
+import { usePermissions } from '../composables/usePermissions'
 import { useToast } from '../composables/useToast'
 import { useViewMode } from '../composables/useViewMode'
 import { useWalletTabs } from '../composables/useSectionTabs'
@@ -201,6 +202,7 @@ const props = defineProps({
 
 const { t, te } = useI18n()
 const accountStore = useAccountStore()
+const { can } = usePermissions()
 const { showToast } = useToast()
 const tabs = useWalletTabs()
 const viewMode = useViewMode(`wallets_${props.visibility}`)
@@ -296,7 +298,7 @@ async function create() {
             currency_id: form.currency_id,
             visibility: props.visibility,
             logo_url: form.logo || undefined,
-            opening_balance: opening > 0 ? opening : undefined,
+            opening_balance: opening !== 0 ? opening : undefined,
         })
         showToast({ message: t('accounts.createdToast', { name: form.name }) })
         showCreate.value = false

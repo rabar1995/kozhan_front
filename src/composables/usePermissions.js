@@ -15,6 +15,12 @@ const MANAGER_ACTIONS = [
     'record-expense',
 ]
 
+// Owner-only actions are implicit (auth.isOwner returns true for everything),
+// but listing them makes the intent explicit in components.
+export const OWNER_ACTIONS = [
+    'manage-accounts',
+]
+
 export function usePermissions() {
     const auth = useAuthStore()
 

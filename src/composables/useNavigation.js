@@ -33,7 +33,7 @@ export function useNavigation() {
         { to: '/dashboard', label: 'nav.home', icon: 'home', match: ['/dashboard'] },
         { to: '/remittances', label: 'nav.remittances', icon: 'remittances', match: ['/remittances'] },
         { to: '/agents', label: 'nav.agents', icon: 'agents', match: ['/agents'] },
-        ...(auth.isOwner
+        ...(auth.isOwner || auth.isManager
             ? [{ to: '/accounts', label: 'nav.walletsGroup', icon: 'wallets', match: ['/accounts', '/private-wallets', '/transfers'] }]
             : []),
         { to: '/expenses', label: 'nav.expenses', icon: 'expenses', match: ['/expenses'] },

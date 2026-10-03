@@ -6,7 +6,19 @@
         <PrivateWalletsOverview v-if="isOwner" ref="privateRef" class="mb-6" />
 
         <!-- Quick actions: the most common jobs, one tap away -->
-        <div v-if="can('create-remittance') || can('record-expense')" class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+        <div v-if="can('create-remittance') || can('record-expense')" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 mb-6">
+            <router-link
+                v-if="isOwner"
+                to="/exchange-deals"
+                class="card card-pad flex items-center gap-3 hover:border-sky-300 hover:shadow-md transition-all"
+            >
+                <span class="w-11 h-11 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" /></svg>
+                </span>
+                <span>
+                    <span class="block text-sm font-semibold text-gray-900">{{ $t('deals.openDeal') }}</span>
+                </span>
+            </router-link>
             <router-link
                 v-if="can('create-remittance')"
                 to="/remittances/incoming"
@@ -89,8 +101,8 @@
                 <KpiCard :label="$t('dashboard.commissionPaid')" :amounts="kpis.today?.commission_paid_by_currency || []" tone="red" icon="money" />
             </div>
 
-            <!-- Owner cash overview -->
-            <CashSafeOverview v-if="isOwner" ref="cashRef" class="mb-8" />
+            <!-- Cash overview: owners and office managers can view, but only owners manage -->
+            <CashSafeOverview v-if="can('view-shared-accounts')" ref="cashRef" class="mb-8" />
 
             <!-- Agents -->
             <h3 class="section-title">{{ $t('dashboard.agentsSection') }}</h3>
