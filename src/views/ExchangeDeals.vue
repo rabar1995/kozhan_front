@@ -14,7 +14,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="form-label">{{ $t('deals.sendWallet') }} <span class="text-red-500">*</span></label>
-                    <LogoSelect v-model="openForm.send_account_id" :options="wallets" :placeholder="$t('common.select')" sublabel-key="currency_code" />
+                    <LogoSelect v-model="openForm.send_account_id" :options="walletOptions" :placeholder="$t('common.select')" sublabel-key="group_label" />
                 </div>
                 <div>
                     <label class="form-label" for="deal-send">{{ $t('forms.sendAmount') }} <span class="text-red-500">*</span></label>
@@ -22,7 +22,7 @@
                 </div>
                 <div>
                     <label class="form-label">{{ $t('deals.settleWallet') }} <span v-if="openForm.status === 'completed'" class="text-red-500">*</span></label>
-                    <LogoSelect v-model="openForm.receive_account_id" :options="wallets" :placeholder="$t('common.select')" sublabel-key="currency_code" />
+                    <LogoSelect v-model="openForm.receive_account_id" :options="walletOptions" :placeholder="$t('common.select')" sublabel-key="group_label" />
                 </div>
                 <div>
                     <label class="form-label" for="deal-recv">{{ $t('deals.receiveAmount') }} <span v-if="openForm.status === 'completed'" class="text-red-500">*</span></label>
@@ -140,7 +140,7 @@
                 </div>
                 <div>
                     <label class="form-label">{{ $t('deals.settleWallet') }} <span class="text-red-500">*</span></label>
-                    <LogoSelect v-model="settleForm.settle_account_id" :options="wallets" :placeholder="$t('common.select')" sublabel-key="currency_code" />
+                    <LogoSelect v-model="settleForm.settle_account_id" :options="walletOptions" :placeholder="$t('common.select')" sublabel-key="group_label" />
                 </div>
                 <div>
                     <label class="form-label" for="settle-amount">{{ $t('deals.settleAmount') }} <span class="text-red-500">*</span></label>
@@ -201,6 +201,27 @@ const { showToast } = useToast()
 
 const wallets = ref([])
 const summary = ref({ pending_accounts: [], pending_deals: [] })
+
+const WALLET_GROUP_ORDER = ['office', 'personal', 'agents']
+
+const resolveWalletGroup = (w) => {
+    if (w.account_type_code === 'agent_wallet') return 'agents'
+    if (w.visibility === 'owner_private') return 'personal'
+    return 'office'
+}
+
+const walletGroupLabel = (w) => {
+    const g = resolveWalletGroup(w)
+    if (g === 'agents') return t('accounts.agentsGroup')
+    if (g === 'personal') return t('accounts.personalGroup')
+    return t('accounts.officeGroup')
+}
+
+const walletOptions = computed(() => {
+    const list = wallets.value.map((w) => ({ ...w, group_label: `${w.currency_code} · ${walletGroupLabel(w)}` }))
+    list.sort((a, b) => WALLET_GROUP_ORDER.indexOf(resolveWalletGroup(a)) - WALLET_GROUP_ORDER.indexOf(resolveWalletGroup(b)))
+    return list
+})
 const deals = ref([])
 const meta = ref(null)
 const page = ref(1)
