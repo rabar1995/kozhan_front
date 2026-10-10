@@ -117,11 +117,13 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="form-label" for="w-group">{{ $t('accounts.group') }} <span class="text-red-500">*</span></label>
-                        <select id="w-group" v-model="form.visibility" class="form-input">
-                            <option value="office_shared">{{ $t('accounts.officeGroup') }}</option>
-                            <option value="owner_private">{{ $t('accounts.personalGroup') }}</option>
+                        <select id="w-group" v-model="form.wallet_group" class="form-input">
+                            <option value="office">{{ $t('accounts.officeGroup') }}</option>
+                            <option value="personal">{{ $t('accounts.personalGroup') }}</option>
+                            <option value="private">{{ $t('accounts.privateGroup') }}</option>
+                            <option value="agents">{{ $t('accounts.agentsGroup') }}</option>
                         </select>
-                        <p v-if="errors.visibility" class="form-error">{{ errors.visibility[0] }}</p>
+                        <p v-if="errors.wallet_group" class="form-error">{{ errors.wallet_group[0] }}</p>
                     </div>
                     <div>
                         <label class="form-label" for="w-type">{{ $t('accounts.type') }} <span class="text-red-500">*</span></label>
@@ -208,15 +210,19 @@ const viewMode = useViewMode('wallets')
 const WALLET_KINDS = ['cash_safe', 'e_wallet', 'bank_account', 'crypto_wallet', 'crypto_platform']
 const LISTED = [...WALLET_KINDS, 'agent_wallet']
 
+const GROUP_ORDER = ['office', 'personal', 'private', 'agents']
+
 const resolveGroup = (account) => {
+    if (account.wallet_group) return account.wallet_group
     if (account.account_type?.code === 'agent_wallet') return 'agents'
-    if (account.visibility === 'owner_private') return 'personal'
+    if (account.visibility === 'owner_private') return 'private'
     return 'office'
 }
 
 const groupLabel = (group) => {
     if (group === 'agents') return t('accounts.agentsGroup')
     if (group === 'personal') return t('accounts.personalGroup')
+    if (group === 'private') return t('accounts.privateGroup')
     return t('accounts.officeGroup')
 }
 
@@ -234,7 +240,7 @@ const editAccount = ref(null)
 const manageAccount = ref(null)
 const historyAccount = ref(null)
 
-const blank = () => ({ name: '', visibility: 'office_shared', account_type_id: '', currency_id: '', opening_balance: '', logo: '' })
+const blank = () => ({ name: '', wallet_group: 'office', account_type_id: '', currency_id: '', opening_balance: '', logo: '' })
 const form = reactive(blank())
 
 const creatableTypes = computed(() => accountTypes.value.filter((tp) => WALLET_KINDS.includes(tp.code)))
@@ -251,8 +257,7 @@ const filtered = computed(() => {
     return wallets.value.filter((a) => [a.name, a.currency?.code, typeName(a), groupLabel(resolveGroup(a))].some((v) => v && v.toLowerCase().includes(q)))
 })
 
-// Group wallets by logical group: Office -> Personal -> Agents.
-const GROUP_ORDER = ['office', 'personal', 'agents']
+// Group wallets by logical group: Office -> Personal -> Private -> Agents.
 const groups = computed(() => {
     const byGroup = {}
     for (const a of filtered.value) {
@@ -291,7 +296,7 @@ async function create() {
     const req = [t('forms.required')]
     const e = {}
     if (! form.name.trim()) e.name = req
-    if (! form.visibility) e.visibility = req
+    if (! form.wallet_group) e.wallet_group = req
     if (! form.account_type_id) e.account_type_id = req
     if (! form.currency_id) e.currency_id = req
     if (Object.keys(e).length) {
@@ -303,7 +308,7 @@ async function create() {
         const opening = Number(form.opening_balance)
         await accountStore.createAccount({
             name: form.name,
-            visibility: form.visibility,
+            wallet_group: form.wallet_group,
             account_type_id: form.account_type_id,
             currency_id: form.currency_id,
             logo_url: form.logo || undefined,

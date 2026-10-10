@@ -202,11 +202,12 @@ const { showToast } = useToast()
 const wallets = ref([])
 const summary = ref({ pending_accounts: [], pending_deals: [] })
 
-const WALLET_GROUP_ORDER = ['office', 'personal', 'agents']
+const WALLET_GROUP_ORDER = ['office', 'personal', 'private', 'agents']
 
 const resolveWalletGroup = (w) => {
+    if (w.wallet_group) return w.wallet_group
     if (w.account_type_code === 'agent_wallet') return 'agents'
-    if (w.visibility === 'owner_private') return 'personal'
+    if (w.visibility === 'owner_private') return 'private'
     return 'office'
 }
 
@@ -214,6 +215,7 @@ const walletGroupLabel = (w) => {
     const g = resolveWalletGroup(w)
     if (g === 'agents') return t('accounts.agentsGroup')
     if (g === 'personal') return t('accounts.personalGroup')
+    if (g === 'private') return t('accounts.privateGroup')
     return t('accounts.officeGroup')
 }
 

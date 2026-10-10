@@ -14,11 +14,13 @@
                     <template v-if="isAgentWallet">
                         <p id="we-group" class="text-sm text-gray-700">{{ $t('accounts.agentsGroup') }}</p>
                     </template>
-                    <select v-else id="we-group" v-model="editForm.visibility" class="form-input">
-                        <option value="office_shared">{{ $t('accounts.officeGroup') }}</option>
-                        <option value="owner_private">{{ $t('accounts.personalGroup') }}</option>
+                    <select v-else id="we-group" v-model="editForm.wallet_group" class="form-input">
+                        <option value="office">{{ $t('accounts.officeGroup') }}</option>
+                        <option value="personal">{{ $t('accounts.personalGroup') }}</option>
+                        <option value="private">{{ $t('accounts.privateGroup') }}</option>
+                        <option value="agents">{{ $t('accounts.agentsGroup') }}</option>
                     </select>
-                    <p v-if="errors.visibility" class="form-error">{{ errors.visibility[0] }}</p>
+                    <p v-if="errors.wallet_group" class="form-error">{{ errors.wallet_group[0] }}</p>
                 </div>
 
                 <!-- Agent wallets keep their type and currency -->
@@ -151,7 +153,7 @@ const editError = ref('')
 const showBalanceConfirm = ref(false)
 const deleteError = ref('')
 
-const editForm = reactive({ name: '', visibility: '', account_type_id: '', currency_id: '', logo: '', new_balance: 0, old_balance: 0 })
+const editForm = reactive({ name: '', wallet_group: '', account_type_id: '', currency_id: '', logo: '', new_balance: 0, old_balance: 0 })
 
 const round4 = (n) => Math.round(Number(n) * 10000) / 10000
 
@@ -177,6 +179,13 @@ const balanceLocked = computed(() =>
 
 const typeLabel = (tp) => (tp?.code && te(`accounts.types.${tp.code}`) ? t(`accounts.types.${tp.code}`) : tp?.name || '')
 
+const walletGroupFor = (account) => {
+    if (account?.wallet_group) return account.wallet_group
+    if (account?.account_type?.code === 'agent_wallet') return 'agents'
+    if (account?.visibility === 'owner_private') return 'private'
+    return 'office'
+}
+
 // Always include the wallet's current type so the select shows it.
 const typeOptions = computed(() => {
     const current = props.editAccount?.account_type
@@ -190,7 +199,7 @@ watch(
     (account) => {
         if (! account) return
         editForm.name = account.name
-        editForm.visibility = account.visibility || 'office_shared'
+        editForm.wallet_group = walletGroupFor(account)
         editForm.account_type_id = account.account_type?.id || account.account_type_id || ''
         editForm.currency_id = account.currency?.id || account.currency_id || ''
         editForm.logo = account.logo_url || ''
@@ -223,7 +232,7 @@ async function doUpdate() {
     try {
         const payload = {
             name: editForm.name,
-            visibility: editForm.visibility,
+            wallet_group: editForm.wallet_group,
             logo_url: editForm.logo || null,
             new_balance: balanceChanged() ? round4(editForm.new_balance) : undefined,
         }

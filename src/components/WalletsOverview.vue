@@ -43,19 +43,21 @@ const loading = ref(false)
 
 const walletTypes = ['cash_safe', 'e_wallet', 'bank_account', 'crypto_wallet', 'crypto_platform', 'agent_wallet']
 
+const GROUP_ORDER = ['office', 'personal', 'private', 'agents']
+
 const resolveGroup = (account) => {
+    if (account.wallet_group) return account.wallet_group
     if (account.account_type?.code === 'agent_wallet') return 'agents'
-    if (account.visibility === 'owner_private') return 'personal'
+    if (account.visibility === 'owner_private') return 'private'
     return 'office'
 }
 
 const groupLabel = (group) => {
     if (group === 'agents') return t('accounts.agentsGroup')
     if (group === 'personal') return t('accounts.personalGroup')
+    if (group === 'private') return t('accounts.privateGroup')
     return t('accounts.officeGroup')
 }
-
-const GROUP_ORDER = ['office', 'personal', 'agents']
 
 const groups = computed(() => {
     const byGroup = {}
