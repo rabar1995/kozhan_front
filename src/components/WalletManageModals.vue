@@ -11,9 +11,12 @@
 
                 <div>
                     <label class="form-label" for="we-group">{{ $t('accounts.group') }}</label>
-                    <select id="we-group" v-model="editForm.visibility" class="form-input">
+                    <template v-if="isAgentWallet">
+                        <p id="we-group" class="text-sm text-gray-700">{{ $t('accounts.agentsGroup') }}</p>
+                    </template>
+                    <select v-else id="we-group" v-model="editForm.visibility" class="form-input">
                         <option value="office_shared">{{ $t('accounts.officeGroup') }}</option>
-                        <option value="owner_private">{{ $t('accounts.privateGroup') }}</option>
+                        <option value="owner_private">{{ $t('accounts.personalGroup') }}</option>
                     </select>
                     <p v-if="errors.visibility" class="form-error">{{ errors.visibility[0] }}</p>
                 </div>

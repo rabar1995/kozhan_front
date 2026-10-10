@@ -278,10 +278,11 @@
     "accounts": {
         "sharedIntro": "The office cash safes, bank accounts and e-wallets.",
         "privateIntro": "Only you can see these wallets.",
-        "intro": "Office and private wallets in one place.",
+        "intro": "Office, personal and agent wallets in one place.",
         "group": "Wallet group",
         "officeGroup": "Office",
-        "privateGroup": "Private",
+        "personalGroup": "Personal",
+        "agentsGroup": "Agents",
         "newWallet": "New wallet",
         "name": "Name",
         "type": "Type",

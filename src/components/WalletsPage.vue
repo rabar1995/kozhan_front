@@ -41,7 +41,7 @@
 
         <template v-else>
             <section v-for="group in groups" :key="group.key" class="mb-6">
-                <h3 class="section-title">{{ groupLabel(group.visibility) }} ({{ group.items.length }})</h3>
+                <h3 class="section-title">{{ groupLabel(group.key) }} ({{ group.items.length }})</h3>
 
                 <div v-if="viewMode === 'cards'" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                     <div v-for="account in group.items" :key="account.id" class="card card-pad flex flex-col" :class="!account.is_active ? 'opacity-70' : ''">
@@ -119,7 +119,7 @@
                         <label class="form-label" for="w-group">{{ $t('accounts.group') }} <span class="text-red-500">*</span></label>
                         <select id="w-group" v-model="form.visibility" class="form-input">
                             <option value="office_shared">{{ $t('accounts.officeGroup') }}</option>
-                            <option value="owner_private">{{ $t('accounts.privateGroup') }}</option>
+                            <option value="owner_private">{{ $t('accounts.personalGroup') }}</option>
                         </select>
                         <p v-if="errors.visibility" class="form-error">{{ errors.visibility[0] }}</p>
                     </div>
@@ -208,10 +208,16 @@ const viewMode = useViewMode('wallets')
 const WALLET_KINDS = ['cash_safe', 'e_wallet', 'bank_account', 'crypto_wallet', 'crypto_platform']
 const LISTED = [...WALLET_KINDS, 'agent_wallet']
 
-const groupLabel = (visibility) => {
-    if (visibility === 'office_shared') return t('accounts.officeGroup')
-    if (visibility === 'owner_private') return t('accounts.privateGroup')
-    return visibility
+const resolveGroup = (account) => {
+    if (account.account_type?.code === 'agent_wallet') return 'agents'
+    if (account.visibility === 'owner_private') return 'personal'
+    return 'office'
+}
+
+const groupLabel = (group) => {
+    if (group === 'agents') return t('accounts.agentsGroup')
+    if (group === 'personal') return t('accounts.personalGroup')
+    return t('accounts.officeGroup')
 }
 
 const intro = computed(() => t('accounts.intro'))
@@ -242,18 +248,19 @@ const wallets = computed(() => accountStore.accounts.filter((a) => LISTED.includ
 const filtered = computed(() => {
     const q = searchQuery.value.toLowerCase().trim()
     if (! q) return wallets.value
-    return wallets.value.filter((a) => [a.name, a.currency?.code, typeName(a), groupLabel(a.visibility)].some((v) => v && v.toLowerCase().includes(q)))
+    return wallets.value.filter((a) => [a.name, a.currency?.code, typeName(a), groupLabel(resolveGroup(a))].some((v) => v && v.toLowerCase().includes(q)))
 })
 
-// Group by wallet group (visibility), office first.
+// Group wallets by logical group: Office -> Personal -> Agents.
+const GROUP_ORDER = ['office', 'personal', 'agents']
 const groups = computed(() => {
-    const byVisibility = {}
+    const byGroup = {}
     for (const a of filtered.value) {
-        const vis = a.visibility || 'unknown'
-        byVisibility[vis] ??= { key: vis, visibility: vis, items: [] }
-        byVisibility[vis].items.push(a)
+        const key = resolveGroup(a)
+        byGroup[key] ??= { key, items: [] }
+        byGroup[key].items.push(a)
     }
-    return Object.values(byVisibility).sort((a, b) => (a.visibility === 'office_shared' ? -1 : 1))
+    return Object.values(byGroup).sort((a, b) => GROUP_ORDER.indexOf(a.key) - GROUP_ORDER.indexOf(b.key))
 })
 
 const totals = computed(() => {

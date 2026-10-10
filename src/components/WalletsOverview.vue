@@ -12,9 +12,9 @@
         </div>
 
         <template v-else-if="groups.length">
-            <div v-for="group in groups" :key="group.visibility" class="mb-4 last:mb-0">
+            <div v-for="group in groups" :key="group.key" class="mb-4 last:mb-0">
                 <h4 class="text-xs font-semibold text-gray-500 mb-2">
-                    {{ groupLabel(group.visibility) }} ({{ group.count }})
+                    {{ groupLabel(group.key) }} ({{ group.count }})
                 </h4>
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
                     <div v-for="tot in group.totals" :key="tot.currency" class="rounded-xl bg-gray-50 px-3 py-3">
@@ -41,32 +41,40 @@ const { t } = useI18n()
 const accountStore = useAccountStore()
 const loading = ref(false)
 
-const walletTypes = ['cash_safe', 'e_wallet', 'bank_account', 'crypto_wallet', 'crypto_platform']
+const walletTypes = ['cash_safe', 'e_wallet', 'bank_account', 'crypto_wallet', 'crypto_platform', 'agent_wallet']
 
-const groupLabel = (visibility) => {
-    if (visibility === 'office_shared') return t('accounts.officeGroup')
-    if (visibility === 'owner_private') return t('accounts.privateGroup')
-    return visibility
+const resolveGroup = (account) => {
+    if (account.account_type?.code === 'agent_wallet') return 'agents'
+    if (account.visibility === 'owner_private') return 'personal'
+    return 'office'
 }
 
+const groupLabel = (group) => {
+    if (group === 'agents') return t('accounts.agentsGroup')
+    if (group === 'personal') return t('accounts.personalGroup')
+    return t('accounts.officeGroup')
+}
+
+const GROUP_ORDER = ['office', 'personal', 'agents']
+
 const groups = computed(() => {
-    const byVisibility = {}
+    const byGroup = {}
     for (const acc of accountStore.accounts) {
         if (! walletTypes.includes(acc.account_type?.code) || ! acc.is_active) continue
-        const vis = acc.visibility || 'unknown'
-        byVisibility[vis] ??= { visibility: vis, count: 0, totals: {} }
-        byVisibility[vis].count++
+        const key = resolveGroup(acc)
+        byGroup[key] ??= { key, count: 0, totals: {} }
+        byGroup[key].count++
         const code = acc.currency?.code || '?'
-        byVisibility[vis].totals[code] ??= { currency: code, total: 0 }
-        byVisibility[vis].totals[code].total += Number(acc.current_balance || 0)
+        byGroup[key].totals[code] ??= { currency: code, total: 0 }
+        byGroup[key].totals[code].total += Number(acc.current_balance || 0)
     }
-    return Object.entries(byVisibility)
-        .map(([visibility, g]) => ({
-            visibility,
+    return Object.entries(byGroup)
+        .map(([key, g]) => ({
+            key,
             count: g.count,
             totals: Object.values(g.totals).sort((a, b) => a.currency.localeCompare(b.currency)),
         }))
-        .sort((a, b) => (a.visibility === 'office_shared' ? -1 : 1))
+        .sort((a, b) => GROUP_ORDER.indexOf(a.key) - GROUP_ORDER.indexOf(b.key))
 })
 
 async function load() {
