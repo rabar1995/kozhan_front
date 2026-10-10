@@ -1,7 +1,5 @@
 <template>
     <div>
-        <SectionTabs :tabs="tabs" :label="$t('nav.walletsGroup')" />
-
         <PageHeader :text="$t('transfers.intro')">
             <button class="btn btn-primary" @click="openForm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" /></svg>
@@ -73,7 +71,6 @@ import { api, apiError } from '../api/client'
 import { useAccountStore } from '../stores/account'
 import { useConfirm } from '../composables/useConfirm'
 import { useToast } from '../composables/useToast'
-import { useWalletTabs } from '../composables/useSectionTabs'
 import { money, dateTime } from '../utils/format'
 import Modal from '../components/Modal.vue'
 import Pagination from '../components/Pagination.vue'
@@ -81,13 +78,11 @@ import MoneyInput from '../components/MoneyInput.vue'
 import Alert from '../components/ui/Alert.vue'
 import EmptyState from '../components/ui/EmptyState.vue'
 import PageHeader from '../components/ui/PageHeader.vue'
-import SectionTabs from '../components/ui/SectionTabs.vue'
 
 const { t } = useI18n()
 const accountStore = useAccountStore()
 const { confirm } = useConfirm()
 const { showToast } = useToast()
-const tabs = useWalletTabs()
 
 // Only real money wallets (no agent or system accounts).
 const CASH_TYPES = ['cash_safe', 'e_wallet', 'bank_account', 'crypto_wallet', 'crypto_platform']

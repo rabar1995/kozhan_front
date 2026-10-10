@@ -92,6 +92,7 @@
         "totalRevenue": "Total Revenue",
         "totalExpenses": "Total Expenses",
         "cashSafes": "Cash on hand",
+        "wallets": "Wallets",
         "privateWallets": "Owner Private Wallets",
         "viewAllPrivate": "View All Private Wallets",
         "urgentFeed": "Waiting to be paid",
@@ -277,6 +278,10 @@
     "accounts": {
         "sharedIntro": "The office cash safes, bank accounts and e-wallets.",
         "privateIntro": "Only you can see these wallets.",
+        "intro": "Office and private wallets in one place.",
+        "group": "Wallet group",
+        "officeGroup": "Office",
+        "privateGroup": "Private",
         "newWallet": "New wallet",
         "name": "Name",
         "type": "Type",

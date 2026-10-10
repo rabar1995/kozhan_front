@@ -1,5 +1,5 @@
 <template>
-    <WalletsPage visibility="office_shared" />
+    <WalletsPage />
 </template>
 
 <script setup>

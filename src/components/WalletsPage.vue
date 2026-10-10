@@ -1,7 +1,5 @@
 <template>
     <div>
-        <SectionTabs :tabs="tabs" :label="$t('nav.walletsGroup')" />
-
         <PageHeader :text="intro">
             <button v-if="can('manage-accounts')" class="btn btn-primary" @click="openCreate">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
@@ -11,7 +9,7 @@
 
         <Alert v-if="error" type="error" dismissible class="mb-4" @dismiss="error = ''">{{ error }}</Alert>
 
-        <!-- Totals per currency -->
+        <!-- Grand totals per currency -->
         <div v-if="totals.length" class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
             <div v-for="tot in totals" :key="tot.currency" class="card px-4 py-3">
                 <p class="text-xs text-gray-500">{{ $t('accounts.totalIn', { currency: tot.currency }) }}</p>
@@ -43,7 +41,7 @@
 
         <template v-else>
             <section v-for="group in groups" :key="group.key" class="mb-6">
-                <h3 v-if="groups.length > 1" class="section-title">{{ group.title }} ({{ group.items.length }})</h3>
+                <h3 class="section-title">{{ groupLabel(group.visibility) }} ({{ group.items.length }})</h3>
 
                 <div v-if="viewMode === 'cards'" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                     <div v-for="account in group.items" :key="account.id" class="card card-pad flex flex-col" :class="!account.is_active ? 'opacity-70' : ''">
@@ -118,6 +116,14 @@
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
+                        <label class="form-label" for="w-group">{{ $t('accounts.group') }} <span class="text-red-500">*</span></label>
+                        <select id="w-group" v-model="form.visibility" class="form-input">
+                            <option value="office_shared">{{ $t('accounts.officeGroup') }}</option>
+                            <option value="owner_private">{{ $t('accounts.privateGroup') }}</option>
+                        </select>
+                        <p v-if="errors.visibility" class="form-error">{{ errors.visibility[0] }}</p>
+                    </div>
+                    <div>
                         <label class="form-label" for="w-type">{{ $t('accounts.type') }} <span class="text-red-500">*</span></label>
                         <select id="w-type" v-model="form.account_type_id" class="form-input">
                             <option value="" disabled>{{ $t('common.select') }}</option>
@@ -125,6 +131,8 @@
                         </select>
                         <p v-if="errors.account_type_id" class="form-error">{{ errors.account_type_id[0] }}</p>
                     </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="form-label" for="w-cur">{{ $t('accounts.currency') }} <span class="text-red-500">*</span></label>
                         <select id="w-cur" v-model="form.currency_id" class="form-input">
@@ -133,13 +141,13 @@
                         </select>
                         <p v-if="errors.currency_id" class="form-error">{{ errors.currency_id[0] }}</p>
                     </div>
+                    <div>
+                        <label class="form-label" for="w-open">{{ $t('accounts.openingBalance') }}</label>
+                        <MoneyInput id="w-open" v-model="form.opening_balance" :max-decimals="4" allow-negative blank-zero placeholder="0" class="form-input" />
+                        <p v-if="errors.opening_balance" class="form-error">{{ errors.opening_balance[0] }}</p>
+                    </div>
                 </div>
-                <div>
-                    <label class="form-label" for="w-open">{{ $t('accounts.openingBalance') }}</label>
-                    <MoneyInput id="w-open" v-model="form.opening_balance" :max-decimals="4" allow-negative blank-zero placeholder="0" class="form-input" />
-                    <p class="form-hint">{{ $t('accounts.openingBalanceHint') }}</p>
-                    <p v-if="errors.opening_balance" class="form-error">{{ errors.opening_balance[0] }}</p>
-                </div>
+                <p class="form-hint">{{ $t('accounts.openingBalanceHint') }}</p>
                 <LogoPicker v-model="form.logo" :name="form.name" />
                 <Alert v-if="createError" type="error">{{ createError }}</Alert>
                 <div class="modal-actions">
@@ -178,7 +186,6 @@ import { useAccountStore } from '../stores/account'
 import { usePermissions } from '../composables/usePermissions'
 import { useToast } from '../composables/useToast'
 import { useViewMode } from '../composables/useViewMode'
-import { useWalletTabs } from '../composables/useSectionTabs'
 import { money } from '../utils/format'
 import Modal from './Modal.vue'
 import HistoryModal from './HistoryModal.vue'
@@ -189,32 +196,25 @@ import WalletManageModals from './WalletManageModals.vue'
 import Alert from './ui/Alert.vue'
 import EmptyState from './ui/EmptyState.vue'
 import PageHeader from './ui/PageHeader.vue'
-import SectionTabs from './ui/SectionTabs.vue'
 import ViewToggle from './ui/ViewToggle.vue'
-
-/**
- * Wallet list shared by "Cash safes" (office_shared) and
- * "Private wallets" (owner_private).
- */
-const props = defineProps({
-    visibility: { type: String, required: true }, // office_shared | owner_private
-})
 
 const { t, te } = useI18n()
 const accountStore = useAccountStore()
 const { can } = usePermissions()
 const { showToast } = useToast()
-const tabs = useWalletTabs()
-const viewMode = useViewMode(`wallets_${props.visibility}`)
+const viewMode = useViewMode('wallets')
 
-const CREATABLE = props.visibility === 'office_shared'
-    ? ['cash_safe', 'e_wallet', 'bank_account']
-    : ['cash_safe', 'e_wallet', 'bank_account', 'crypto_wallet', 'crypto_platform']
-// Real wallets only: internal ledger accounts (commission, expenses,
-// equity…) are not shown here.
-const LISTED = [...CREATABLE, 'agent_wallet']
+// All wallet kinds that can be created; agent wallets are created via the Agents page.
+const WALLET_KINDS = ['cash_safe', 'e_wallet', 'bank_account', 'crypto_wallet', 'crypto_platform']
+const LISTED = [...WALLET_KINDS, 'agent_wallet']
 
-const intro = computed(() => (props.visibility === 'office_shared' ? t('accounts.sharedIntro') : t('accounts.privateIntro')))
+const groupLabel = (visibility) => {
+    if (visibility === 'office_shared') return t('accounts.officeGroup')
+    if (visibility === 'owner_private') return t('accounts.privateGroup')
+    return visibility
+}
+
+const intro = computed(() => t('accounts.intro'))
 
 const searchQuery = ref('')
 const error = ref('')
@@ -228,31 +228,32 @@ const editAccount = ref(null)
 const manageAccount = ref(null)
 const historyAccount = ref(null)
 
-const blank = () => ({ name: '', account_type_id: '', currency_id: '', opening_balance: '', logo: '' })
+const blank = () => ({ name: '', visibility: 'office_shared', account_type_id: '', currency_id: '', opening_balance: '', logo: '' })
 const form = reactive(blank())
 
-const creatableTypes = computed(() => accountTypes.value.filter((tp) => CREATABLE.includes(tp.code)))
+const creatableTypes = computed(() => accountTypes.value.filter((tp) => WALLET_KINDS.includes(tp.code)))
 
 const typeLabel = (type) => (type?.code && te(`accounts.types.${type.code}`) ? t(`accounts.types.${type.code}`) : type?.name || '')
 const typeName = (account) => typeLabel(account.account_type)
 
-const wallets = computed(() => accountStore.accounts.filter((a) =>
-    a.visibility === props.visibility && LISTED.includes(a.account_type?.code)))
+// All real wallets the current user can see (backend VisibilityScope limits managers to office_shared).
+const wallets = computed(() => accountStore.accounts.filter((a) => LISTED.includes(a.account_type?.code)))
 
 const filtered = computed(() => {
     const q = searchQuery.value.toLowerCase().trim()
     if (! q) return wallets.value
-    return wallets.value.filter((a) => [a.name, a.currency?.code, typeName(a)].some((v) => v && v.toLowerCase().includes(q)))
+    return wallets.value.filter((a) => [a.name, a.currency?.code, typeName(a), groupLabel(a.visibility)].some((v) => v && v.toLowerCase().includes(q)))
 })
 
-// Cash wallets first; agent wallets in their own section.
+// Group by wallet group (visibility), office first.
 const groups = computed(() => {
-    const cash = filtered.value.filter((a) => a.account_type?.code !== 'agent_wallet')
-    const agents = filtered.value.filter((a) => a.account_type?.code === 'agent_wallet')
-    return [
-        cash.length && { key: 'cash', title: t('accounts.cashWallets'), items: cash },
-        agents.length && { key: 'agents', title: t('accounts.agentWallets'), items: agents },
-    ].filter(Boolean)
+    const byVisibility = {}
+    for (const a of filtered.value) {
+        const vis = a.visibility || 'unknown'
+        byVisibility[vis] ??= { key: vis, visibility: vis, items: [] }
+        byVisibility[vis].items.push(a)
+    }
+    return Object.values(byVisibility).sort((a, b) => (a.visibility === 'office_shared' ? -1 : 1))
 })
 
 const totals = computed(() => {
@@ -283,6 +284,7 @@ async function create() {
     const req = [t('forms.required')]
     const e = {}
     if (! form.name.trim()) e.name = req
+    if (! form.visibility) e.visibility = req
     if (! form.account_type_id) e.account_type_id = req
     if (! form.currency_id) e.currency_id = req
     if (Object.keys(e).length) {
@@ -294,9 +296,9 @@ async function create() {
         const opening = Number(form.opening_balance)
         await accountStore.createAccount({
             name: form.name,
+            visibility: form.visibility,
             account_type_id: form.account_type_id,
             currency_id: form.currency_id,
-            visibility: props.visibility,
             logo_url: form.logo || undefined,
             opening_balance: opening !== 0 ? opening : undefined,
         })

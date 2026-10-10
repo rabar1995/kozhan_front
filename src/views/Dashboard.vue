@@ -2,8 +2,7 @@
     <div>
         <Alert v-if="error" type="error" dismissible class="mb-4" @dismiss="error = ''">{{ error }}</Alert>
 
-        <!-- Owner private wallets: always first for the owner -->
-        <PrivateWalletsOverview v-if="isOwner" ref="privateRef" class="mb-6" />
+
 
         <!-- Quick actions: the most common jobs, one tap away -->
         <div v-if="can('create-remittance') || can('record-expense')" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 mb-6">
@@ -101,8 +100,8 @@
                 <KpiCard :label="$t('dashboard.commissionPaid')" :amounts="kpis.today?.commission_paid_by_currency || []" tone="red" icon="money" />
             </div>
 
-            <!-- Cash overview: owners and office managers can view, but only owners manage -->
-            <CashSafeOverview v-if="can('view-shared-accounts')" ref="cashRef" class="mb-8" />
+            <!-- Wallet overview grouped by Office / Private -->
+            <WalletsOverview v-if="isOwner || can('view-shared-accounts')" ref="walletsRef" class="mb-8" />
 
             <!-- Agents -->
             <h3 class="section-title">{{ $t('dashboard.agentsSection') }}</h3>
@@ -144,8 +143,7 @@ import { api, apiError } from '../api/client'
 import { usePermissions } from '../composables/usePermissions'
 import { money as moneyFmt, localDate, daysAgo } from '../utils/format'
 import KpiCard from '../components/KpiCard.vue'
-import CashSafeOverview from '../components/CashSafeOverview.vue'
-import PrivateWalletsOverview from '../components/PrivateWalletsOverview.vue'
+import WalletsOverview from '../components/WalletsOverview.vue'
 import UrgentPayoutsFeed from '../components/UrgentPayoutsFeed.vue'
 import PayoutModal from '../components/PayoutModal.vue'
 import Alert from '../components/ui/Alert.vue'
@@ -167,8 +165,7 @@ const activePreset = ref('today')
 
 const datePresets = [{ key: 'today' }, { key: 'yesterday' }]
 
-const cashRef = ref(null)
-const privateRef = ref(null)
+const walletsRef = ref(null)
 const urgentRef = ref(null)
 
 const monthly = computed(() => kpis.value?.monthly?.by_currency || [])
@@ -204,8 +201,7 @@ async function refreshAll() {
     refreshing.value = true
     await Promise.all([
         loadKpis(),
-        cashRef.value?.load?.(),
-        privateRef.value?.load?.(),
+        walletsRef.value?.load?.(),
         urgentRef.value?.load?.(),
     ])
     refreshing.value = false

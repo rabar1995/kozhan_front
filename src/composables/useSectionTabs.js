@@ -12,11 +12,4 @@ export function useRemittanceTabs() {
     ])
 }
 
-/** Tabs shown at the top of every Wallets page (owner only). */
-export function useWalletTabs() {
-    return computed(() => [
-        { to: '/accounts', label: 'tabs.cashSafes' },
-        { to: '/private-wallets', label: 'tabs.privateWallets' },
-        { to: '/transfers', label: 'tabs.transfers' },
-    ])
-}
+

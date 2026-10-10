@@ -23,7 +23,7 @@ const routes = [
             { path: 'remittances/outgoing', name: 'remittances-outgoing', component: () => import('../views/OutgoingForm.vue'), meta: { title: 'nav.bookOutgoing' } },
             { path: 'agents', name: 'agents', component: () => import('../views/AgentList.vue'), meta: { title: 'nav.agents' } },
             { path: 'accounts', name: 'accounts', component: () => import('../views/AccountList.vue'), meta: { title: 'nav.wallets' } },
-            { path: 'private-wallets', name: 'private-wallets', component: () => import('../views/PrivateWallets.vue'), meta: { title: 'nav.privateWallets', role: 'owner' } },
+            { path: 'private-wallets', redirect: '/accounts' },
             { path: 'expenses', name: 'expenses', component: () => import('../views/ExpenseList.vue'), meta: { title: 'nav.expenses' } },
             { path: 'expenses/new', name: 'expenses-new', component: () => import('../views/ExpenseForm.vue'), meta: { title: 'nav.registerExpense' } },
             { path: 'reports/profit-loss', name: 'profit-loss', component: () => import('../views/ProfitLoss.vue'), meta: { title: 'nav.profitLoss', role: 'owner' } },

@@ -9,6 +9,15 @@
                     <p v-if="errors.name" class="form-error">{{ errors.name[0] }}</p>
                 </div>
 
+                <div>
+                    <label class="form-label" for="we-group">{{ $t('accounts.group') }}</label>
+                    <select id="we-group" v-model="editForm.visibility" class="form-input">
+                        <option value="office_shared">{{ $t('accounts.officeGroup') }}</option>
+                        <option value="owner_private">{{ $t('accounts.privateGroup') }}</option>
+                    </select>
+                    <p v-if="errors.visibility" class="form-error">{{ errors.visibility[0] }}</p>
+                </div>
+
                 <!-- Agent wallets keep their type and currency -->
                 <div v-if="!isAgentWallet" class="grid grid-cols-2 gap-3">
                     <div>
@@ -139,7 +148,7 @@ const editError = ref('')
 const showBalanceConfirm = ref(false)
 const deleteError = ref('')
 
-const editForm = reactive({ name: '', account_type_id: '', currency_id: '', logo: '', new_balance: 0, old_balance: 0 })
+const editForm = reactive({ name: '', visibility: '', account_type_id: '', currency_id: '', logo: '', new_balance: 0, old_balance: 0 })
 
 const round4 = (n) => Math.round(Number(n) * 10000) / 10000
 
@@ -178,6 +187,7 @@ watch(
     (account) => {
         if (! account) return
         editForm.name = account.name
+        editForm.visibility = account.visibility || 'office_shared'
         editForm.account_type_id = account.account_type?.id || account.account_type_id || ''
         editForm.currency_id = account.currency?.id || account.currency_id || ''
         editForm.logo = account.logo_url || ''
@@ -210,6 +220,7 @@ async function doUpdate() {
     try {
         const payload = {
             name: editForm.name,
+            visibility: editForm.visibility,
             logo_url: editForm.logo || null,
             new_balance: balanceChanged() ? round4(editForm.new_balance) : undefined,
         }

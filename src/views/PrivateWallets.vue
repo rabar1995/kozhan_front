@@ -1,7 +1,11 @@
 <template>
-    <WalletsPage visibility="owner_private" />
+    <div />
 </template>
 
 <script setup>
-import WalletsPage from '../components/WalletsPage.vue'
+import { onBeforeMount } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+onBeforeMount(() => router.replace('/accounts'))
 </script>
