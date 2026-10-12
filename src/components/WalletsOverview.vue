@@ -19,7 +19,7 @@
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
                     <div v-for="tot in group.totals" :key="tot.currency" class="rounded-xl bg-gray-50 px-3 py-3">
                         <p class="text-xs text-gray-500">{{ $t('accounts.totalIn', { currency: tot.currency }) }}</p>
-                        <p class="text-base sm:text-lg font-bold tabular-nums mt-0.5" :class="tot.total >= 0 ? 'text-gray-900' : 'text-red-600'">
+                        <p class="text-base sm:text-lg font-bold tabular-nums mt-0.5" :class="balanceClass(tot.total)">
                             {{ money(tot.total, tot.currency) }}
                         </p>
                     </div>
@@ -35,7 +35,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAccountStore } from '../stores/account'
-import { money } from '../utils/format'
+import { money, balanceClass } from '../utils/format'
 
 const { t } = useI18n()
 const accountStore = useAccountStore()

@@ -53,3 +53,10 @@ export const directionClass = {
     incoming: 'bg-blue-100 text-blue-800',
     outgoing: 'bg-purple-100 text-purple-800',
 }
+
+export function balanceClass(value) {
+    const n = Number(value ?? 0)
+    if (n < 0) return 'text-red-600'
+    if (n > 0) return 'text-emerald-600'
+    return 'text-gray-900'
+}

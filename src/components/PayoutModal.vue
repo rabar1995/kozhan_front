@@ -11,13 +11,14 @@
 
             <div>
                 <label class="form-label">{{ $t('remittances.paymentAccount') }}</label>
-                <select v-model="accountId" class="form-input">
-                    <option value="" disabled>{{ $t('remittances.selectAccount') }}</option>
-                    <option v-for="a in options" :key="a.id" :value="a.id">
-                        {{ a.name }} — {{ money(a.current_balance, a.currency) }}
-                    </option>
-                </select>
-                <p v-if="!loadingAccounts && !options.length" class="form-hint text-amber-700">
+                <LogoSelect
+                    v-model="accountId"
+                    :options="accountOptions"
+                    :placeholder="$t('remittances.selectAccount')"
+                    :empty-text="$t('remittances.noPayAccount', { currency: currencyCode })"
+                    sublabel-key="sublabel"
+                />
+                <p v-if="!loadingAccounts && !accountOptions.length" class="form-hint text-amber-700">
                     {{ $t('remittances.noPayAccount', { currency: currencyCode }) }}
                 </p>
                 <p v-else-if="lowBalance" class="form-hint text-amber-700">{{ $t('remittances.lowBalance') }}</p>
@@ -50,6 +51,7 @@ import { apiError } from '../api/client'
 import { money } from '../utils/format'
 import Modal from './Modal.vue'
 import Alert from './ui/Alert.vue'
+import LogoSelect from './LogoSelect.vue'
 
 /**
  * Single payout dialog used everywhere a pending remittance is paid out
@@ -68,6 +70,7 @@ const remittanceStore = useRemittanceStore()
 const { showToast } = useToast()
 
 const CASH_TYPES = ['cash_safe', 'e_wallet', 'bank_account']
+const GROUP_ORDER = ['office', 'personal', 'private', 'agents']
 
 const accountId = ref('')
 const error = ref('')
@@ -76,16 +79,32 @@ const loadingAccounts = ref(false)
 
 const currencyCode = computed(() => props.remittance?.receive_currency?.code || '')
 
-const options = computed(() =>
-    accountStore.balances.filter((a) =>
-        CASH_TYPES.includes(a.type)
-        && a.current_balance !== null
-        && (! currencyCode.value || a.currency === currencyCode.value),
-    ),
-)
+const walletGroup = (a) => a.wallet_group || (a.visibility === 'owner_private' ? 'private' : 'office')
+
+const accountOptions = computed(() => {
+    const groupLabel = (g) => {
+        if (g === 'agents') return t('accounts.agentsGroup')
+        if (g === 'personal') return t('accounts.personalGroup')
+        if (g === 'private') return t('accounts.privateGroup')
+        return t('accounts.officeGroup')
+    }
+    const list = accountStore.balances
+        .filter((a) =>
+            CASH_TYPES.includes(a.type)
+            && a.current_balance !== null
+            && (! currencyCode.value || a.currency === currencyCode.value),
+        )
+        .map((a) => ({
+            ...a,
+            group: walletGroup(a),
+            sublabel: `${money(a.current_balance, a.currency)} · ${groupLabel(walletGroup(a))}`,
+        }))
+    list.sort((a, b) => GROUP_ORDER.indexOf(a.group) - GROUP_ORDER.indexOf(b.group))
+    return list
+})
 
 const lowBalance = computed(() => {
-    const a = options.value.find((o) => o.id === accountId.value)
+    const a = accountOptions.value.find((o) => o.id === accountId.value)
     return a ? Number(a.current_balance) < Number(props.remittance?.receive_amount || 0) : false
 })
 
@@ -96,7 +115,7 @@ watch(() => props.remittance, async (r) => {
     loadingAccounts.value = true
     try {
         await accountStore.fetchBalances()
-        if (options.value.length === 1) accountId.value = options.value[0].id
+        if (accountOptions.value.length === 1) accountId.value = accountOptions.value[0].id
     } catch (e) {
         error.value = apiError(e).message
     } finally {

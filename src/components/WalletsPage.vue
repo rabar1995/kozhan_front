@@ -13,7 +13,7 @@
         <div v-if="totals.length" class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
             <div v-for="tot in totals" :key="tot.currency" class="card px-4 py-3">
                 <p class="text-xs text-gray-500">{{ $t('accounts.totalIn', { currency: tot.currency }) }}</p>
-                <p class="text-lg font-bold tabular-nums" :class="tot.total < 0 ? 'text-red-600' : 'text-gray-900'">{{ money(tot.total, tot.currency) }}</p>
+                <p class="text-lg font-bold tabular-nums" :class="balanceClass(tot.total)">{{ money(tot.total, tot.currency) }}</p>
             </div>
         </div>
 
@@ -56,7 +56,7 @@
                             </div>
                             <span class="px-2 py-1 rounded-lg text-xs font-bold bg-slate-900 text-white shrink-0">{{ account.currency?.code }}</span>
                         </div>
-                        <p class="mt-4 text-2xl font-bold tabular-nums" :class="Number(account.current_balance) < 0 ? 'text-red-600' : 'text-gray-900'">
+                        <p class="mt-4 text-2xl font-bold tabular-nums" :class="balanceClass(account.current_balance)">
                             {{ money(account.current_balance, account.currency?.code) }}
                         </p>
                         <div class="mt-auto pt-4 flex gap-2">
@@ -89,7 +89,7 @@
                                     {{ typeName(account) }}
                                     <span v-if="!account.is_active" class="text-xs text-gray-500">· {{ $t('accounts.inactive') }}</span>
                                 </td>
-                                <td class="px-4 py-3 text-end font-bold tabular-nums whitespace-nowrap" :class="Number(account.current_balance) < 0 ? 'text-red-600' : 'text-gray-900'">
+                                <td class="px-4 py-3 text-end font-bold tabular-nums whitespace-nowrap" :class="balanceClass(account.current_balance)">
                                     {{ money(account.current_balance, account.currency?.code) }}
                                 </td>
                                 <td class="px-4 py-3">
@@ -188,7 +188,7 @@ import { useAccountStore } from '../stores/account'
 import { usePermissions } from '../composables/usePermissions'
 import { useToast } from '../composables/useToast'
 import { useViewMode } from '../composables/useViewMode'
-import { money } from '../utils/format'
+import { money, balanceClass } from '../utils/format'
 import Modal from './Modal.vue'
 import HistoryModal from './HistoryModal.vue'
 import LogoPicker from './LogoPicker.vue'

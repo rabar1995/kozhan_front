@@ -102,7 +102,8 @@ function onInput(event) {
 
 function onFocus(event) {
     focused.value = true
-    raw.value = props.modelValue === null || props.modelValue === undefined || props.modelValue === ''
+    const isBlankZero = props.blankZero && Number(props.modelValue) === 0
+    raw.value = isBlankZero || props.modelValue === null || props.modelValue === undefined || props.modelValue === ''
         ? ''
         : String(props.modelValue)
     // format the incoming numeric value (e.g. 1250 -> 1,250) before the caret call
