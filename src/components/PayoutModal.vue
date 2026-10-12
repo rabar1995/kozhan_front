@@ -69,7 +69,7 @@ const accountStore = useAccountStore()
 const remittanceStore = useRemittanceStore()
 const { showToast } = useToast()
 
-const CASH_TYPES = ['cash_safe', 'e_wallet', 'bank_account']
+const PAY_FROM_TYPES = ['cash_safe', 'e_wallet', 'bank_account', 'agent_wallet']
 const GROUP_ORDER = ['office', 'personal', 'private', 'agents']
 
 const accountId = ref('')
@@ -90,7 +90,7 @@ const accountOptions = computed(() => {
     }
     const list = accountStore.balances
         .filter((a) =>
-            CASH_TYPES.includes(a.type)
+            PAY_FROM_TYPES.includes(a.type)
             && a.current_balance !== null
             && (! currencyCode.value || a.currency === currencyCode.value),
         )
