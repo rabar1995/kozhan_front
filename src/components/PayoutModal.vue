@@ -83,7 +83,7 @@ const accountOptions = computed(() => {
     const list = accountStore.balances
         .filter((a) =>
             PAY_FROM_TYPES.includes(a.type)
-            && (a.wallet_group === OFFICE_GROUP || (!a.wallet_group && a.visibility === 'office_shared'))
+            && a.wallet_group === OFFICE_GROUP
             && a.current_balance !== null
             && (! currencyCode.value || a.currency === currencyCode.value),
         )
@@ -105,6 +105,7 @@ watch(() => props.remittance, async (r) => {
     accountId.value = ''
     error.value = ''
     loadingAccounts.value = true
+    accountStore.balances = []
     try {
         await accountStore.fetchBalances()
         if (accountOptions.value.length === 1) accountId.value = accountOptions.value[0].id
