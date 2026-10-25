@@ -69,8 +69,8 @@ const accountStore = useAccountStore()
 const remittanceStore = useRemittanceStore()
 const { showToast } = useToast()
 
-const PAY_FROM_TYPES = ['cash_safe', 'e_wallet', 'bank_account', 'agent_wallet']
-const GROUP_ORDER = ['office', 'personal', 'private', 'agents']
+const PAY_FROM_TYPES = ['cash_safe', 'e_wallet', 'bank_account']
+const OFFICE_GROUP = 'office'
 
 const accountId = ref('')
 const error = ref('')
@@ -79,27 +79,19 @@ const loadingAccounts = ref(false)
 
 const currencyCode = computed(() => props.remittance?.receive_currency?.code || '')
 
-const walletGroup = (a) => a.wallet_group || (a.visibility === 'owner_private' ? 'private' : 'office')
-
 const accountOptions = computed(() => {
-    const groupLabel = (g) => {
-        if (g === 'agents') return t('accounts.agentsGroup')
-        if (g === 'personal') return t('accounts.personalGroup')
-        if (g === 'private') return t('accounts.privateGroup')
-        return t('accounts.officeGroup')
-    }
     const list = accountStore.balances
         .filter((a) =>
             PAY_FROM_TYPES.includes(a.type)
+            && (a.wallet_group === OFFICE_GROUP || (!a.wallet_group && a.visibility === 'office_shared'))
             && a.current_balance !== null
             && (! currencyCode.value || a.currency === currencyCode.value),
         )
         .map((a) => ({
             ...a,
-            group: walletGroup(a),
-            sublabel: `${money(a.current_balance, a.currency)} · ${groupLabel(walletGroup(a))}`,
+            sublabel: money(a.current_balance, a.currency),
         }))
-    list.sort((a, b) => GROUP_ORDER.indexOf(a.group) - GROUP_ORDER.indexOf(b.group))
+    list.sort((a, b) => a.name.localeCompare(b.name))
     return list
 })
 

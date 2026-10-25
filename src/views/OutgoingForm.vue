@@ -171,6 +171,7 @@ const cashAccounts = computed(() =>
     accountStore.accounts.filter((a) =>
         CASH_TYPES.includes(a.account_type?.code)
         && a.is_active
+        && (a.wallet_group === 'office' || (!a.wallet_group && a.visibility === 'office_shared'))
         && a.currency_id === form.receive_currency_id,
     ),
 )
